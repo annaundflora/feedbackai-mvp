@@ -1,0 +1,56 @@
+{
+    "company_name": "Zipmend GmbH",
+    "industry": "Transport & Logistics",
+    "business_model": "Transport Marketplace connecting Shippers with Carriers",
+    "geographic_scope": "EU-wide coverage with strategic expansion to UK and Scandinavia",
+    "target_markets": [
+        "Germany",
+        "European Union",
+        "United Kingdom",
+        "Scandinavia"
+    ],
+    "value_proposition": "Online platform for courier and freight services",
+    "business_type": "B2B Marketplace",
+    "revenue_model": "Commission from transport sales margins",
+    "service_portfolio": [
+        "Express transports",
+        "FTL (Full Truck Load) transports",
+        "LTL (Less Than Truck Load) transports"
+    ],
+    "strategic_goals": [
+        "Increase booking volume",
+        "Maximize shipper prices",
+        "Maximize carrier network size",
+        "Minimize carrier costs for transport sales"
+    ],
+    "key_business_process": "Blind auction system - lowest carrier bid wins assignment",
+    "digital_products": [
+        {
+            "name": "Booking Platform",
+            "target_user": "Shippers",
+            "purpose": "Multi-step booking process with price calculator"
+        },
+        {
+            "name": "Carrier View",
+            "target_user": "Carriers",
+            "purpose": "Transport marketplace interface for carriers"
+        },
+        {
+            "name": "Express Panel",
+            "target_user": "Internal Transport Managers",
+            "purpose": "Data capture and transport allocation tool"
+        }
+    ],
+    "known_challenges": [
+        "High early-stage carrier churn (47% don't exceed 5 bids)",
+        "Intransparent bidding process creates user frustration",
+        "New carriers have disadvantaged starting conditions",
+        "Short-term allocation strategy conflicts with long-term value"
+    ],
+    "competitive_landscape": [
+        "Trans.eu",
+        "Uber Freight",
+        "Other freight platforms with more transparency"
+    ],
+    "market_position": "Leading German online provider, but perceived as static and intransparent compared to competitors"
+}

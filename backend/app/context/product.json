@@ -1,0 +1,55 @@
+{
+  "product_name": "Carrier View",
+  "user_role": "Carrier",
+  "user_description": "Transport companies and logistics providers seeking freight opportunities",
+  "product_purpose": "Carrier interface for Zipmend's transport marketplace",
+  "core_features": [
+    "Filterable transport table with search functionality",
+    "Bidding system with vehicle and driver assignment",
+    "Vehicle availability scheduling and management",
+    "Multiple view modes (Find transports, Bids, Current/Completed transports)",
+    "Company and resource management dashboard",
+    "Bid submission with pricing, vehicle, and driver details"
+  ],
+  "main_workflows": [
+    "Search and filter available transport jobs",
+    "Submit competitive bids on transport opportunities",
+    "Assign vehicles and drivers to won transports",
+    "Manage vehicle availability and schedules",
+    "Track bid outcomes and transport history",
+    "Update company profile and resource information"
+  ],
+  "primary_pain_areas": [
+    "Bid transparency and competitiveness feedback",
+    "Vehicle scheduling and availability management",
+    "Communication gaps during bidding process",
+    "User interface efficiency and navigation",
+    "New carrier onboarding and success rates",
+    "Post-bid communication and negotiation"
+  ],
+  "user_journey_stages": [
+    "Registration and company setup",
+    "Vehicle and driver management",
+    "First transport search and filtering",
+    "Initial bid submission process",
+    "Bid outcome notification",
+    "Vehicle and driver assignment",
+    "Transport execution and completion, with status updates, ETAs, and tracking",
+    "Post-transport communication, such as CMR, invoice, and feedback"
+  ],
+  "business_context": {
+    "auction_system": "Blind bidding - carriers don't see competitor bids",
+    "allocation_method": "Lowest bid typically wins (margin-focused)"
+  },
+  "competitive_differentiators": [
+    "EU-wide transport coverage",
+    "Express and FTL/LTL transport options",
+    "Integrated vehicle and driver management"
+  ],
+  "known_competitor_advantages": [
+    "Trans.eu: Direct chat and post-bid negotiation capability (also used by Zipmend)",
+    "Timocom.com: Biggest FTL/LTL transport exchange platform in Europe (also used by Zipmend)",
+    "Other platforms: More transparent bidding processes",
+    "Competitors: Better communication during evaluation"
+  ]
+}
