@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config.settings import Settings
 from app.api.routes import router as interview_router
+from app.config.settings import Settings
 
 
 @asynccontextmanager

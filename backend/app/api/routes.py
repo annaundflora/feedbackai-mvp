@@ -4,20 +4,19 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 
+from app.api.dependencies import get_interview_service
 from app.api.schemas import (
-    StartRequest,
-    MessageRequest,
     EndRequest,
     EndResponse,
     ErrorResponse,
+    MessageRequest,
+    StartRequest,
 )
-from app.api.dependencies import get_interview_service
 from app.interview.service import (
     InterviewService,
-    SessionNotFoundError,
     SessionAlreadyCompletedError,
+    SessionNotFoundError,
 )
-
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
 

@@ -3,13 +3,12 @@
 from fastapi import Request
 
 from app.config.settings import Settings
-from app.interview.graph import InterviewGraph
-from app.interview.service import InterviewService
-from app.interview.repository import InterviewRepository
-from app.insights.summary import SummaryService
-from app.interview.timeout import TimeoutManager
 from app.db.supabase import get_supabase_client
-
+from app.insights.summary import SummaryService
+from app.interview.graph import InterviewGraph
+from app.interview.repository import InterviewRepository
+from app.interview.service import InterviewService
+from app.interview.timeout import TimeoutManager
 
 _interview_service: InterviewService | None = None
 

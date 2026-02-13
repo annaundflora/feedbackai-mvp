@@ -3,9 +3,9 @@
 Erstellt eine einzelne Supabase-Client-Instanz die von allen
 Repositories geteilt wird. Konfiguriert mit DB_TIMEOUT_SECONDS.
 """
-from supabase import create_client, Client
-from app.config.settings import Settings
+from supabase import Client, create_client
 
+from app.config.settings import Settings
 
 _supabase_client: Client | None = None
 

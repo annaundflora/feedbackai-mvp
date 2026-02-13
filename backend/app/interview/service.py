@@ -1,18 +1,17 @@
 """InterviewService -- orchestrates interview lifecycle."""
 
-import uuid
 import json
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 
-from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 
+from app.insights.summary import SummaryService
 from app.interview.graph import InterviewGraph
 from app.interview.repository import InterviewRepository
-from app.insights.summary import SummaryService
 from app.interview.timeout import TimeoutManager
-
 
 logger = logging.getLogger(__name__)
 

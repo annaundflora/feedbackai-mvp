@@ -1,7 +1,8 @@
 """Pydantic DTOs for API requests and responses."""
 
-from pydantic import BaseModel, Field, field_validator
 import re
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class StartRequest(BaseModel):

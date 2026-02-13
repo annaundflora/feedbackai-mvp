@@ -5,11 +5,10 @@ Separater LLM-Call via OpenRouter. Nutzt ein eigenes Summary-Prompt-Template.
 import asyncio
 import logging
 
+from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage, AnyMessage
 
 from app.config.settings import Settings
-
 
 logger = logging.getLogger(__name__)
 

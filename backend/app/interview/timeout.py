@@ -6,7 +6,7 @@ die Session als completed_timeout in Supabase markiert.
 """
 import asyncio
 import logging
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 logger = logging.getLogger(__name__)
 
