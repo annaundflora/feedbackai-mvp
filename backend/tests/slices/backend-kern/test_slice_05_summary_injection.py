@@ -80,10 +80,11 @@ def mock_graph():
             yield chunk
 
     graph.astream = mock_astream
-    graph.get_history.return_value = [
+    # WICHTIG: get_history ist synchron, nicht async! Nutze MagicMock, nicht AsyncMock.return_value
+    graph.get_history = MagicMock(return_value=[
         HumanMessage(content="Das Bidding nervt"),
         AIMessage(content="Was genau findest du frustrierend?"),
-    ]
+    ])
     return graph
 
 
