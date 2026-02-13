@@ -21,6 +21,7 @@ class InterviewGraph:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._checkpointer = MemorySaver()
+        self._current_summaries: list[str] = []
         self._llm = ChatOpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=settings.openrouter_api_key,
@@ -48,7 +49,7 @@ class InterviewGraph:
         Returns:
             Dict mit neuer AIMessage unter "messages" Key.
         """
-        system_prompt = PromptAssembler.build(summaries=[])
+        system_prompt = PromptAssembler.build(summaries=self._current_summaries)
         messages = [SystemMessage(content=system_prompt)] + state["messages"]
 
         response = await asyncio.wait_for(
@@ -100,6 +101,18 @@ class InterviewGraph:
             stream_mode="messages",
         ):
             yield chunk, metadata
+
+    def set_summaries(self, summaries: list[str]) -> None:
+        """Setzt die Summaries fuer den naechsten Graph-Aufruf.
+
+        Wird von InterviewService.start() aufgerufen BEVOR der Graph
+        invoked wird. Die Summaries werden dann in _interviewer_node()
+        an PromptAssembler.build() weitergegeben.
+
+        Args:
+            summaries: Liste von Summary-Strings aus vorherigen Sessions.
+        """
+        self._current_summaries = summaries or []
 
     def get_history(self, session_id: str) -> list:
         """Liest die Conversation-History aus dem MemorySaver.

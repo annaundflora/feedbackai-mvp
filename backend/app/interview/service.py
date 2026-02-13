@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
 from app.interview.graph import InterviewGraph
 from app.interview.repository import InterviewRepository
+from app.insights.summary import SummaryService
 
 
 logger = logging.getLogger(__name__)
@@ -37,9 +38,11 @@ class InterviewService:
         self,
         graph: InterviewGraph,
         repository: InterviewRepository | None = None,
+        summary_service: SummaryService | None = None,
     ) -> None:
         self._graph = graph
         self._repository = repository
+        self._summary_service = summary_service
         self._sessions: dict[str, dict] = {}
 
     async def start(self, anonymous_id: str) -> AsyncGenerator[str, None]:
@@ -71,6 +74,18 @@ class InterviewService:
                 await self._repository.create_session(session_id, anonymous_id)
             except Exception as e:
                 logger.error(f"DB create_session failed for {session_id}: {e}")
+
+        # Vorherige Summaries laden und in Prompt injizieren
+        summaries: list[str] = []
+        if self._repository:
+            try:
+                summaries = await self._repository.get_recent_summaries(
+                    anonymous_id, limit=3
+                )
+            except Exception as e:
+                logger.error(f"DB get_recent_summaries failed for {anonymous_id}: {e}")
+
+        self._graph.set_summaries(summaries)
 
         try:
             async for sse_line in self._stream_graph(
@@ -151,7 +166,14 @@ class InterviewService:
         history = self._graph.get_history(session_id)
         transcript = self._format_transcript(history)
 
-        placeholder_summary = "Summary-Generierung noch nicht implementiert (Slice 5)"
+        # Echte Summary generieren
+        summary = "Keine Summary verfuegbar"
+        if self._summary_service:
+            try:
+                summary = await self._summary_service.generate(history)
+            except Exception as e:
+                logger.error(f"Summary generation failed for {session_id}: {e}")
+                summary = "Summary-Generierung fehlgeschlagen"
 
         # DB-Update: Save transcript + summary
         if self._repository:
@@ -159,7 +181,7 @@ class InterviewService:
                 await self._repository.complete_session(
                     session_id=session_id,
                     transcript=transcript,
-                    summary=placeholder_summary,
+                    summary=summary,
                     message_count=message_count,
                 )
             except Exception as e:
@@ -168,7 +190,7 @@ class InterviewService:
         self._sessions[session_id]["status"] = "completed"
 
         return {
-            "summary": placeholder_summary,
+            "summary": summary,
             "message_count": message_count,
         }
 

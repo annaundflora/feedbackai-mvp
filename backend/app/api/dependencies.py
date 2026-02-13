@@ -6,6 +6,7 @@ from app.config.settings import Settings
 from app.interview.graph import InterviewGraph
 from app.interview.service import InterviewService
 from app.interview.repository import InterviewRepository
+from app.insights.summary import SummaryService
 from app.db.supabase import get_supabase_client
 
 
@@ -27,9 +28,11 @@ def get_interview_service(request: Request) -> InterviewService:
             supabase_client=supabase_client,
             settings=settings,
         )
+        summary_service = SummaryService(settings=settings)
         _interview_service = InterviewService(
             graph=graph,
             repository=repository,
+            summary_service=summary_service,
         )
     return _interview_service
 
