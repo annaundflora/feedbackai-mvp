@@ -3,7 +3,7 @@
 import pytest
 import json
 import re
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessageChunk, AIMessage, HumanMessage
 
@@ -36,10 +36,12 @@ def mock_graph():
             yield chunk
 
     graph.astream = mock_astream
-    graph.get_history.return_value = [
+    # Use MagicMock instead of AsyncMock for synchronous methods
+    graph.get_history = MagicMock(return_value=[
         HumanMessage(content="Test"),
         AIMessage(content="Antwort"),
-    ]
+    ])
+    graph.set_summaries = MagicMock(return_value=None)
     return graph
 
 
