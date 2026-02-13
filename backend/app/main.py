@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config.settings import Settings
+from app.api.routes import router as interview_router
 
 
 @asynccontextmanager
@@ -37,3 +38,6 @@ app.add_middleware(
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+app.include_router(interview_router)
