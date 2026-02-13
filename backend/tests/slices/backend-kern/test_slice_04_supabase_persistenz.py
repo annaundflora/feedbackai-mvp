@@ -79,6 +79,7 @@ def repository(mock_supabase_client, mock_settings):
 def mock_graph():
     """Mock InterviewGraph."""
     from langchain_core.messages import AIMessageChunk
+    from unittest.mock import MagicMock
 
     graph = AsyncMock()
 
@@ -91,10 +92,11 @@ def mock_graph():
             yield chunk
 
     graph.astream = mock_astream
-    graph.get_history.return_value = [
+    # get_history ist synchron in der echten Implementierung
+    graph.get_history = MagicMock(return_value=[
         HumanMessage(content="Das Bidding nervt"),
         AIMessage(content="Was genau findest du frustrierend?"),
-    ]
+    ])
     return graph
 
 
@@ -139,7 +141,8 @@ class TestSupabaseClientSingleton:
 
         reset_supabase_client()
         with patch("app.db.supabase.create_client") as mock_create:
-            mock_create.return_value = MagicMock()
+            # Jeder Aufruf gibt eine neue Mock-Instanz zurueck
+            mock_create.side_effect = [MagicMock(), MagicMock()]
 
             client1 = get_supabase_client(mock_settings)
             reset_supabase_client()
