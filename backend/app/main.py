@@ -16,7 +16,10 @@ async def lifespan(app: FastAPI):
     settings = Settings()
     app.state.settings = settings
     yield
-    # Shutdown (cleanup later)
+    # Shutdown: Alle Timeout-Tasks canceln
+    timeout_manager = getattr(app.state, "timeout_manager", None)
+    if timeout_manager:
+        timeout_manager.cancel_all()
 
 
 app = FastAPI(

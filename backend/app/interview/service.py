@@ -11,6 +11,7 @@ from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 from app.interview.graph import InterviewGraph
 from app.interview.repository import InterviewRepository
 from app.insights.summary import SummaryService
+from app.interview.timeout import TimeoutManager
 
 
 logger = logging.getLogger(__name__)
@@ -39,10 +40,12 @@ class InterviewService:
         graph: InterviewGraph,
         repository: InterviewRepository | None = None,
         summary_service: SummaryService | None = None,
+        timeout_manager: TimeoutManager | None = None,
     ) -> None:
         self._graph = graph
         self._repository = repository
         self._summary_service = summary_service
+        self._timeout_manager = timeout_manager
         self._sessions: dict[str, dict] = {}
 
     async def start(self, anonymous_id: str) -> AsyncGenerator[str, None]:
@@ -96,6 +99,10 @@ class InterviewService:
 
             # After text-done: send metadata with session_id
             yield json.dumps({"type": "metadata", "session_id": session_id})
+
+            # Timeout-Timer registrieren
+            if self._timeout_manager:
+                self._timeout_manager.register(session_id)
         except Exception as e:
             yield json.dumps({"type": "error", "message": str(e)})
 
@@ -118,6 +125,10 @@ class InterviewService:
             SessionAlreadyCompletedError: Session has already been completed.
         """
         self._validate_session(session_id)
+
+        # Timeout-Timer zuruecksetzen
+        if self._timeout_manager:
+            self._timeout_manager.reset(session_id)
 
         try:
             async for sse_line in self._stream_graph(
@@ -159,6 +170,10 @@ class InterviewService:
             SessionAlreadyCompletedError: Session has already been completed.
         """
         self._validate_session(session_id)
+
+        # Timeout-Timer canceln
+        if self._timeout_manager:
+            self._timeout_manager.cancel(session_id)
 
         message_count = self._sessions[session_id]["message_count"]
 
@@ -254,3 +269,58 @@ class InterviewService:
 
         if self._sessions[session_id]["status"] != "active":
             raise SessionAlreadyCompletedError(f"Session already completed: {session_id}")
+
+    async def _handle_timeout(self, session_id: str) -> None:
+        """Callback fuer TimeoutManager: Auto-Summary bei Inaktivitaet.
+
+        1. Prueft ob Session noch aktiv ist
+        2. Liest History aus Graph
+        3. Generiert Summary via SummaryService (Fehler => summary=None)
+        4. Speichert in Supabase mit status="completed_timeout"
+        5. Markiert Session in-memory als "completed_timeout"
+
+        Args:
+            session_id: UUID der Session die getimed out ist.
+        """
+        # Nur fuer aktive Sessions
+        if session_id not in self._sessions:
+            logger.warning(f"Timeout for unknown session {session_id}")
+            return
+
+        if self._sessions[session_id]["status"] != "active":
+            logger.debug(f"Timeout for already completed session {session_id}")
+            return
+
+        message_count = self._sessions[session_id]["message_count"]
+
+        # History und Transcript lesen
+        history = self._graph.get_history(session_id)
+        transcript = self._format_transcript(history)
+
+        # Summary generieren -- Fehler fuehrt zu summary=None
+        summary = None
+        if self._summary_service and history:
+            try:
+                summary = await self._summary_service.generate(history)
+            except Exception as e:
+                logger.error(f"Auto-summary generation failed for timed out session {session_id}: {e}")
+
+        # In DB speichern
+        if self._repository:
+            try:
+                await self._repository.complete_session(
+                    session_id=session_id,
+                    transcript=transcript,
+                    summary=summary,
+                    message_count=message_count,
+                    status="completed_timeout",
+                )
+            except Exception as e:
+                logger.error(f"DB complete_session failed for timed out session {session_id}: {e}")
+
+        # In-Memory Status aktualisieren
+        self._sessions[session_id]["status"] = "completed_timeout"
+        logger.info(
+            f"Session {session_id} completed via timeout "
+            f"(messages={message_count}, summary={'yes' if summary else 'no'})"
+        )
