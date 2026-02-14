@@ -64,3 +64,41 @@ Wenn fuer diese Runde konkrete Hinweise uebermittelt werden, befolge sie mit hoe
 ### ANTWORTFORMAT
 Antworte ausschliesslich mit dieser einen Frage: genau ein Satz, ohne Anfuehrungszeichen, ohne Emojis, ohne Klammern, ohne Praefixe.
 """
+
+
+SUMMARY_INJECTION_TEMPLATE = """
+
+## KONTEXT AUS VORHERIGEN GESPRAECHEN
+
+Die folgenden Erkenntnisse stammen aus vorherigen Gespraechen mit diesem User.
+Nutze sie als Hintergrund, aber frage nicht direkt danach -- lasse den User neue Themen einbringen.
+
+{summaries}
+"""
+
+
+class PromptAssembler:
+    """Baut den vollstaendigen System-Prompt aus statischem Prompt + Summary-Injection."""
+
+    @staticmethod
+    def build(summaries: list[str] | None = None) -> str:
+        """Assembliert den System-Prompt.
+
+        Args:
+            summaries: Liste von Summary-Strings aus vorherigen Sessions.
+                       None oder leere Liste = keine Injection.
+                       Kommt erst in Slice 5 mit echten Daten.
+
+        Returns:
+            Vollstaendiger System-Prompt String.
+        """
+        prompt = SYSTEM_PROMPT
+
+        if summaries:
+            formatted = "\n\n".join(
+                f"### Gespraech {i + 1}\n{summary}"
+                for i, summary in enumerate(summaries)
+            )
+            prompt += SUMMARY_INJECTION_TEMPLATE.format(summaries=formatted)
+
+        return prompt

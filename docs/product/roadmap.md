@@ -1,10 +1,47 @@
 ---
 title: Zipmend FeedbackAI MVP -- Roadmap
 created: 2026-02-12
+updated: 2026-02-13
 status: active
 ---
 
 # Roadmap: Zipmend FeedbackAI MVP
+
+## Aktueller Stand
+
+**Phase:** 1 -- Backend-Kern
+**Status:** als naechstes
+**Letztes Check-in:** 2026-02-13
+
+### Wo stehe ich?
+Phase 0 (Fundament) ist abgeschlossen. Repo-Struktur, Dependencies, Context-JSONs und Interviewer-Prompt sind vorhanden. Naechster Schritt: Backend-Kern aufbauen (FastAPI + LangGraph), danach Widget-Shell.
+
+## Aktuelle Prioritaeten
+
+### P1: Phase 1 -- Backend-Kern (NAECHSTES)
+
+**Warum zuerst?** Der Interviewer ist das Herzstuck. Frueh testen ob der Prompt funktioniert und die Gespraechsfuehrung natuerlich ist. Das Widget ist nur eine Schale.
+
+**Empfohlene Reihenfolge:**
+1. [ ] 1.1 FastAPI Skeleton (main.py, config.py, CORS)
+2. [ ] 1.2 LangGraph Interview-Graph (1-Node, System-Prompt + History)
+3. [ ] 1.6 API Endpoints (start/message/end)
+4. [ ] 1.5 MemorySaver als Checkpointer
+5. [ ] 1.3 Conditional Edge (message_count > 10 oder Exit-Signal)
+6. [ ] 1.4 End-Node (Summary via separatem LLM-Call)
+7. [ ] 1.7 curl-Test E2E
+
+**Hinweis:** SSE-Endpoint gleich im Vercel AI SDK-Format bauen, nicht erst in Phase 3 umbauen.
+
+### P2: Phase 2 -- Widget-Shell (DANACH)
+
+**Warum danach?** Backend validiert den Kern-Wert. Widget folgt, sobald der Interviewer per curl funktioniert.
+
+### Risiko
+
+SSE-Kompatibilitaet FastAPI ↔ @assistant-ui/react (Phase 3). Frueh im AI SDK-Format bauen reduziert das Risiko.
+
+---
 
 ## Vision
 
@@ -25,7 +62,7 @@ Ein Link, den ein Zipmend-Carrier anklicken kann, ein KI-Interview durchlaeuft, 
 
 ### Phase 0 -- Fundament
 
-**Status:** pending
+**Status:** done (2026-02-12)
 **Ziel:** Repo steht, Dependencies installierbar, Context-Dateien vorhanden.
 
 | Task | Beschreibung |
@@ -162,3 +199,19 @@ Phase 2 (Widget-Shell) kann parallel zu Phase 1 starten. Phase 3 braucht beide.
 | 10 | Session Context | Session Recordings (Clarity o.ae.) als Zusatzkontext fuer den Interviewer. |
 
 Priorisierung: 6 → 7 → 8 → 9 → 10. Siehe `vision.md` fuer Begruendung.
+
+---
+
+## Erledigtes
+
+| Datum | Was |
+|-------|-----|
+| 2026-02-12 | Phase 0: Repo-Struktur, Dependencies, Context-JSONs, Interviewer-Prompt |
+
+## Naechste Roadmap-Session
+
+**Wann:** Nach Abschluss Phase 1 (Backend per curl testbar)
+**Agenda:**
+- Phase 1 retrospektiv: Prompt-Qualitaet bewerten
+- Phase 2 planen: Widget-Shell Slice-Reihenfolge
+- Phase 3 Risiko: SSE-Strategie festlegen

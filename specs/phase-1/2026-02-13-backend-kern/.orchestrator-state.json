@@ -1,0 +1,24 @@
+{
+  "spec_path": "specs/phase-1/2026-02-13-backend-kern",
+  "feature_name": "backend-kern",
+  "status": "completed",
+  "started_at": "2026-02-14T00:00:00Z",
+  "total_waves": 6,
+  "total_slices": 6,
+  "current_wave_index": 6,
+  "current_slice_id": null,
+  "waves": [
+    { "number": 1, "name": "App-Skeleton + DDD-Struktur", "slices": ["slice-01"], "status": "completed" },
+    { "number": 2, "name": "LangGraph Interview-Graph", "slices": ["slice-02"], "status": "completed" },
+    { "number": 3, "name": "SSE-Streaming Endpoints", "slices": ["slice-03"], "status": "completed" },
+    { "number": 4, "name": "Supabase-Persistenz", "slices": ["slice-04"], "status": "completed" },
+    { "number": 5, "name": "Summary-Generierung + Injection", "slices": ["slice-05"], "status": "completed" },
+    { "number": 6, "name": "Session-Timeout + Auto-Summary", "slices": ["slice-06"], "status": "completed" }
+  ],
+  "completed_slices": ["slice-01", "slice-02", "slice-03", "slice-04", "slice-05", "slice-06"],
+  "failed_slices": [],
+  "evidence_files": [".claude/evidence/backend-kern/slice-01.json", ".claude/evidence/backend-kern/slice-02.json", ".claude/evidence/backend-kern/slice-03.json", ".claude/evidence/backend-kern/slice-04.json", ".claude/evidence/backend-kern/slice-05.json", ".claude/evidence/backend-kern/slice-06.json"],
+  "last_action": "Feature implementation completed successfully",
+  "last_updated": "2026-02-14T00:00:14Z",
+  "completed_at": "2026-02-14T00:00:14Z"
+}
