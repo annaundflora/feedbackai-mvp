@@ -9,8 +9,8 @@ from pathlib import Path
 import re
 import json
 
-ORCHESTRATE_FILE = Path(".claude/commands/orchestrate.md")
-IMPLEMENTER_FILE = Path(".claude/agents/slice-implementer.md")
+ORCHESTRATE_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "commands" / "orchestrate.md"
+IMPLEMENTER_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "agents" / "slice-implementer.md"
 
 
 @pytest.fixture
