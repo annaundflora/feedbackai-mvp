@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import json
 
-AGENT_FILE = Path(".claude/agents/test-validator.md")
+AGENT_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "agents" / "test-validator.md"
 
 
 @pytest.fixture
