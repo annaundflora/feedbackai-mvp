@@ -8,8 +8,8 @@
   "current_wave_index": 2,
   "current_slice_id": "slice-03-orchestrator-pipeline",
   "current_state": "auto_fixing",
-  "retry_count": 1,
-  "failed_stage": "lint",
+  "retry_count": 2,
+  "failed_stage": "integration",
   "waves": [
     {
       "number": 1,

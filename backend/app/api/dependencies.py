@@ -55,3 +55,11 @@ def reset_interview_service() -> None:
     """Resets the singleton (for tests)."""
     global _interview_service
     _interview_service = None
+
+
+def get_interview_service_for_tests() -> InterviewService | None:
+    """Get the current InterviewService singleton (for tests only).
+
+    Returns None if no service has been created yet.
+    """
+    return _interview_service

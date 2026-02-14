@@ -89,19 +89,19 @@ class InterviewService:
 
         self._graph.set_summaries(summaries)
 
+        # Send metadata first (so session_id is available even if streaming fails)
+        yield json.dumps({"type": "metadata", "session_id": session_id})
+
+        # Timeout-Timer registrieren (before streaming, so it's active even if LLM fails)
+        if self._timeout_manager:
+            self._timeout_manager.register(session_id)
+
         try:
             async for sse_line in self._stream_graph(
                 messages=[],
                 session_id=session_id,
             ):
                 yield sse_line
-
-            # After text-done: send metadata with session_id
-            yield json.dumps({"type": "metadata", "session_id": session_id})
-
-            # Timeout-Timer registrieren
-            if self._timeout_manager:
-                self._timeout_manager.register(session_id)
         except Exception as e:
             yield json.dumps({"type": "error", "message": str(e)})
 
