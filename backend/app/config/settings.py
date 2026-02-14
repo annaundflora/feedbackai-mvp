@@ -31,4 +31,4 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "FeedbackAI"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": "../.env", "env_file_encoding": "utf-8"}
