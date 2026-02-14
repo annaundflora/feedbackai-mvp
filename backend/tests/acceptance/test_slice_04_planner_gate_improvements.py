@@ -8,9 +8,9 @@ korrekt erweitert/angepasst wurden.
 import pytest
 from pathlib import Path
 
-SLICE_WRITER_FILE = Path(".claude/agents/slice-writer.md")
-SLICE_COMPLIANCE_FILE = Path(".claude/agents/slice-compliance.md")
-PLAN_SPEC_FILE = Path(".claude/templates/plan-spec.md")
+SLICE_WRITER_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "agents" / "slice-writer.md"
+SLICE_COMPLIANCE_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "agents" / "slice-compliance.md"
+PLAN_SPEC_FILE = Path(__file__).parent.parent.parent.parent / ".claude" / "templates" / "plan-spec.md"
 
 
 @pytest.fixture
