@@ -200,9 +200,9 @@ FOR each wave IN waves:
       "slice": slice_id,
       "timestamp": ISO_TIMESTAMP,
       "status": "completed",
-      "implementation": impl_json,
-      "tests": tw_json,
-      "validation": val_json,
+      "implementation": impl_json,  # { status, files_changed, commit_hash, notes }
+      "tests": tw_json,              # { status, test_files, test_count, ac_coverage: { total, covered, missing } }
+      "validation": val_json,        # { overall_status, stages: { tests, lint, typecheck }, failed_stage?, error_output? }
       "retries": state.retry_count
     }
     Write("{EVIDENCE_DIR}/{slice_id}.json", evidence)
