@@ -1,7 +1,7 @@
 ---
 title: Zipmend FeedbackAI MVP -- Roadmap
 created: 2026-02-12
-updated: 2026-02-13
+updated: 2026-02-14
 status: active
 ---
 
@@ -9,37 +9,35 @@ status: active
 
 ## Aktueller Stand
 
-**Phase:** 1 -- Backend-Kern
+**Phase:** 2 -- Widget-Shell
 **Status:** als naechstes
-**Letztes Check-in:** 2026-02-13
+**Letztes Check-in:** 2026-02-14
 
 ### Wo stehe ich?
-Phase 0 (Fundament) ist abgeschlossen. Repo-Struktur, Dependencies, Context-JSONs und Interviewer-Prompt sind vorhanden. Naechster Schritt: Backend-Kern aufbauen (FastAPI + LangGraph), danach Widget-Shell.
+Phase 0 (Fundament) und Phase 1 (Backend-Kern) sind abgeschlossen. Backend laeuft mit FastAPI + LangGraph, SSE-Streaming, Supabase-Persistenz, Summary-Generierung und Session-Timeout. Naechster Schritt: Widget-Shell aufbauen (React + Vite), danach Streaming-Bruecke.
 
 ## Aktuelle Prioritaeten
 
-### P1: Phase 1 -- Backend-Kern (NAECHSTES)
+### P1: Phase 2 -- Widget-Shell (NAECHSTES)
 
-**Warum zuerst?** Der Interviewer ist das Herzstuck. Frueh testen ob der Prompt funktioniert und die Gespraechsfuehrung natuerlich ist. Das Widget ist nur eine Schale.
+**Warum jetzt?** Backend ist fertig und per curl testbar. Das Widget ist die naechste Voraussetzung fuer Phase 3 (Streaming-Bruecke). Ohne Widget keine Integration.
 
-**Empfohlene Reihenfolge:**
-1. [ ] 1.1 FastAPI Skeleton (main.py, config.py, CORS)
-2. [ ] 1.2 LangGraph Interview-Graph (1-Node, System-Prompt + History)
-3. [ ] 1.6 API Endpoints (start/message/end)
-4. [ ] 1.5 MemorySaver als Checkpointer
-5. [ ] 1.3 Conditional Edge (message_count > 10 oder Exit-Signal)
-6. [ ] 1.4 End-Node (Summary via separatem LLM-Call)
-7. [ ] 1.7 curl-Test E2E
+**Tasks:**
+1. [ ] 2.1 Vite + React Setup, IIFE-Build (`widget.js`)
+2. [ ] 2.2 Floating Button (fixed bottom-right, "Feedback geben")
+3. [ ] 2.3 Chat-Panel (fixed overlay, ~400x600px, mobile fullscreen)
+4. [ ] 2.4 State-Machine: Consent -> Chat -> Danke
+5. [ ] 2.5 Consent-Screen (Intro-Text + "Los geht's"-Button)
+6. [ ] 2.6 Danke-Screen (statisch)
+7. [ ] 2.7 Scoped Styling (kein CSS-Leak in Host-Page)
 
-**Hinweis:** SSE-Endpoint gleich im Vercel AI SDK-Format bauen, nicht erst in Phase 3 umbauen.
+### P2: Phase 3 -- Streaming-Bruecke (DANACH)
 
-### P2: Phase 2 -- Widget-Shell (DANACH)
-
-**Warum danach?** Backend validiert den Kern-Wert. Widget folgt, sobald der Interviewer per curl funktioniert.
+**Warum danach?** Braucht Backend (done) + Widget. Erfahrungsgemaess der trickigste Teil (SSE-Kompatibilitaet).
 
 ### Risiko
 
-SSE-Kompatibilitaet FastAPI ↔ @assistant-ui/react (Phase 3). Frueh im AI SDK-Format bauen reduziert das Risiko.
+SSE-Kompatibilitaet FastAPI ↔ @assistant-ui/react (Phase 3). SSE-Endpoint ist bereits im Vercel AI SDK-Format gebaut.
 
 ---
 
@@ -80,7 +78,7 @@ Ein Link, den ein Zipmend-Carrier anklicken kann, ein KI-Interview durchlaeuft, 
 
 ### Phase 1 -- Backend-Kern
 
-**Status:** pending
+**Status:** done (2026-02-14)
 **Ziel:** Komplettes Interview per curl durchspielbar.
 **Abhaengigkeit:** Phase 0
 
@@ -207,11 +205,12 @@ Priorisierung: 6 → 7 → 8 → 9 → 10. Siehe `vision.md` fuer Begruendung.
 | Datum | Was |
 |-------|-----|
 | 2026-02-12 | Phase 0: Repo-Struktur, Dependencies, Context-JSONs, Interviewer-Prompt |
+| 2026-02-14 | Phase 1: Backend-Kern (FastAPI, LangGraph, SSE, Supabase, Summary, Timeout) -- 6 Slices |
 
 ## Naechste Roadmap-Session
 
-**Wann:** Nach Abschluss Phase 1 (Backend per curl testbar)
+**Wann:** Nach Abschluss Phase 2 (Widget-Shell navigierbar)
 **Agenda:**
-- Phase 1 retrospektiv: Prompt-Qualitaet bewerten
-- Phase 2 planen: Widget-Shell Slice-Reihenfolge
-- Phase 3 Risiko: SSE-Strategie festlegen
+- Phase 3 Risiko: SSE-Kompatibilitaet Backend ↔ Widget validieren
+- Phase 4 planen: E2E-Flow mit Supabase-Persistenz
+- Prompt-Qualitaet bewerten (erstes echtes Interview)
