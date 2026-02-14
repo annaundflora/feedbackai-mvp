@@ -52,7 +52,7 @@ class TestOverallStatusPassed:
             "Agent-Definition muss 'failed' als moeglichen Status definieren"
         # Pruefe dass alle 5 Stages definiert sind
         for stage in ["unit", "integration", "acceptance", "smoke", "regression"]:
-            assert f'"{stage}"' in agent_content or f"stages.{stage}" in agent_content or f"Stage" in agent_content, \
+            assert f'"{stage}"' in agent_content or f"stages.{stage}" in agent_content or "Stage" in agent_content, \
                 f"Agent-Definition muss Stage '{stage}' definieren"
 
 

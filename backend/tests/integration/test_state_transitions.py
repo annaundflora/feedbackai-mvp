@@ -5,7 +5,6 @@ Tests state machine behavior and integration between all slices.
 
 import json
 import pytest
-from unittest.mock import AsyncMock
 
 
 def parse_sse_events(response_text: str) -> list[dict]:
@@ -508,6 +507,7 @@ class TestBusinessRules:
 
         Session timeout can be configured via settings.
         """
+        from unittest.mock import patch
         from app.config.settings import Settings
         import os
 
@@ -515,10 +515,3 @@ class TestBusinessRules:
         with patch.dict(os.environ, {"SESSION_TIMEOUT_SECONDS": "120"}):
             settings = Settings()
             assert settings.session_timeout_seconds == 120
-
-
-def patch_dict(target, *args, **kwargs):
-    """Helper for patching environment variables."""
-    from unittest.mock import patch
-
-    return patch.dict(target, *args, **kwargs)

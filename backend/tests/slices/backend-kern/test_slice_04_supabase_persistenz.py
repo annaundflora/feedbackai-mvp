@@ -343,7 +343,7 @@ class TestInterviewServiceWithRepository:
         session_id = list(service._sessions.keys())[0]
 
         # Session beenden
-        result = await service.end(session_id)
+        await service.end(session_id)
 
         mock_repository.complete_session.assert_called_once()
         call_kwargs = mock_repository.complete_session.call_args[1]

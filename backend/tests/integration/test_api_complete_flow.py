@@ -5,7 +5,6 @@ Tests the full interview lifecycle: start -> message -> end
 
 import json
 import re
-import pytest
 
 
 def parse_sse_events(response_text: str) -> list[dict]:

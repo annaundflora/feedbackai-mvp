@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 
 # -- Fixtures --

@@ -6,7 +6,6 @@ Tests automatic session timeout and cleanup.
 import asyncio
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 
 def parse_sse_events(response_text: str) -> list[dict]:
@@ -65,8 +64,6 @@ class TestSessionTimeout:
 
         service = get_interview_service()
         if hasattr(service, "_timeout_manager") and service._timeout_manager:
-            initial_task = service._timeout_manager._tasks.get(session_id)
-
             # Send message (should reset timeout)
             client.post(
                 "/api/interview/message",
@@ -113,7 +110,6 @@ class TestSessionTimeout:
 
         Timeout handler sets status=completed_timeout in database.
         """
-        from app.interview.service import InterviewService
 
         # Get service
         from app.api.dependencies import get_interview_service

@@ -6,7 +6,6 @@ These tests are designed to work with the actual implementation.
 
 import json
 import re
-import pytest
 
 
 def parse_sse_events(response_text: str) -> list[dict]:
