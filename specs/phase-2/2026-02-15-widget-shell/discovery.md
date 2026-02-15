@@ -31,13 +31,13 @@
 | Vite + React + TypeScript Setup mit IIFE-Build (`widget.js`) |
 | Floating Button (Chat-Bubble Icon, rund, fixed bottom-right) |
 | Chat-Panel (fixed overlay, ~400x600px Desktop, Fullscreen Mobile) |
-| State-Machine: `closed` -> `consent` -> `chat` -> `thankyou` |
+| State-Machine: 2 Dimensionen -- panelOpen (boolean) + screen (consent/chat/thankyou) |
 | Consent-Screen (Headline + Intro-Text + CTA-Button) |
-| Chat-Screen mit @assistant-ui/react Primitives (statisch, kein Backend) |
-| Danke-Screen (Headline + Danke-Text, Auto-Close nach Sekunden) |
+| Chat-Screen mit @assistant-ui/react Primitives (leerer Chat, Composer offen aber ohne Backend) |
+| Danke-Screen (Headline + Danke-Text, Auto-Close nach Sekunden, Reset auf consent) |
 | Scoped Styling via CSS-Namespace (`.feedbackai-widget`) |
 | Slide-Up Animation beim Oeffnen/Schliessen |
-| X-Button im Panel-Header (schliesst Panel, State bleibt) |
+| X-Button im Panel-Header (schliesst Panel, screen-State bleibt) |
 | Data-Attribute Konfiguration (`data-api-url`, `data-lang`) |
 | Konfigurierbare UI-Texte (Default: Deutsch) |
 
@@ -89,10 +89,11 @@ Vorhanden:
 1. **Host-Page laedt** -> Widget-Script wird ausgefuehrt -> Floating Button erscheint (bottom-right)
 2. **Carrier klickt Floating Button** -> Panel gleitet hoch (Slide-Up, 300ms) -> Consent-Screen sichtbar
 3. **Carrier liest Consent-Text** -> Klickt "Los geht's" -> Chat-Screen sichtbar
-4. **Carrier sieht Chat-UI** -> (Phase 2: statisch/leer, Phase 3: Interview startet)
+4. **Carrier sieht Chat-UI** -> (Phase 2: leerer Chat mit Composer, Phase 3: Interview startet)
 5. **Interview endet** (Phase 3+) -> Danke-Screen wird angezeigt
-6. **Danke-Screen** -> Nach einigen Sekunden schliesst sich das Panel automatisch
-7. **Jederzeit: X-Button** -> Panel schliesst sich, State bleibt -> Erneutes Oeffnen zeigt letzten Screen
+6. **Danke-Screen** -> Nach ~5 Sekunden schliesst sich das Panel automatisch -> screen wird auf `consent` zurueckgesetzt
+7. **Jederzeit: X-Button** -> Panel schliesst sich (panelOpen=false), screen bleibt -> Erneutes Oeffnen zeigt letzten Screen
+8. **Nach Danke + Reopen** -> Consent-Screen (neues Interview, Backend liefert Kontext via Summary-Injection in Phase 3)
 
 **Error Paths:**
 - Script-Load-Fehler -> Widget rendert sich nicht (kein sichtbarer Fehler fuer User)
@@ -114,7 +115,7 @@ Vorhanden:
 
 ### Screen: Panel Container
 **Position:** Fixed, bottom-right (16px Abstand), Desktop ~400x600px
-**When:** Panel ist geoeffnet (State != `closed`)
+**When:** `panelOpen = true`
 
 **Layout:**
 - Header: Widget-Titel (links) + X-Button (rechts)
@@ -124,7 +125,7 @@ Vorhanden:
 
 ### Screen: Consent
 **Position:** Panel Body
-**When:** State = `consent`
+**When:** `screen = consent`
 
 **Layout:**
 - Headline: "Ihr Feedback zaehlt!"
@@ -133,17 +134,16 @@ Vorhanden:
 
 ### Screen: Chat
 **Position:** Panel Body
-**When:** State = `chat`
+**When:** `screen = chat`
 
 **Layout:**
 - @assistant-ui/react Thread-Primitives
-- Nachrichtenliste (scrollbar)
-- Composer/Input-Feld am unteren Rand
-- Phase 2: Statische Welcome-Message oder leerer State
+- Nachrichtenliste (scrollbar, Phase 2: leer)
+- Composer/Input-Feld am unteren Rand (Phase 2: sichtbar und offen, ohne Backend-Anbindung)
 
 ### Screen: Danke
 **Position:** Panel Body
-**When:** State = `thankyou`
+**When:** `screen = thankyou`
 
 **Layout:**
 - Headline: "Vielen Dank!"
@@ -161,35 +161,54 @@ Vorhanden:
 | `panel-header` | Header | Panel Top | -- | Zeigt Titel + X-Button |
 | `close-button` | Button | Panel Header rechts | `default`, `hover` | Klick schliesst Panel, State bleibt |
 | `consent-cta` | Button | Consent Screen unten | `default`, `hover`, `active` | Klick wechselt zu Chat-State |
-| `chat-thread` | @assistant-ui Thread | Chat Screen | `empty`, `active` | Phase 2: statisch. Phase 3: Live-Chat |
-| `chat-composer` | @assistant-ui Composer | Chat Screen unten | `empty`, `typing` | Phase 2: sichtbar aber nicht funktional |
+| `chat-thread` | @assistant-ui Thread | Chat Screen | `empty`, `active` | Phase 2: leer. Phase 3: Live-Chat |
+| `chat-composer` | @assistant-ui Composer | Chat Screen unten | `empty`, `typing` | Phase 2: sichtbar und offen (ohne Backend). Phase 3: funktional angebunden |
 
 ---
 
 ## Feature State Machine
 
+### 2-Dimensionen-Modell
+
+Das Widget hat **zwei unabhaengige State-Dimensionen**:
+
+| Dimension | Typ | Werte | Beschreibung |
+|-----------|-----|-------|--------------|
+| `panelOpen` | boolean | `true`, `false` | Ob das Panel sichtbar ist |
+| `screen` | enum | `consent`, `chat`, `thankyou` | Welcher Screen im Panel angezeigt wird |
+
+> **Wichtig:** `panelOpen` und `screen` sind unabhaengig. Das Panel kann geschlossen sein (`panelOpen=false`) waehrend `screen=chat` ist. Beim erneuten Oeffnen wird der aktuelle `screen` angezeigt.
+
 ### States Overview
 
-| State | UI | Available Actions |
-|-------|----|--------------------|
-| `closed` | Nur Floating Button sichtbar | Floating Button klicken -> oeffnet Panel |
-| `consent` | Panel offen, Consent-Screen | "Los geht's" klicken, X-Button klicken |
-| `chat` | Panel offen, Chat-Screen | Nachrichten senden (Phase 3), X-Button klicken |
-| `thankyou` | Panel offen, Danke-Screen | X-Button klicken, wartet auf Auto-Close |
+| panelOpen | screen | UI | Available Actions |
+|-----------|--------|----|-------------------|
+| `false` | `consent` | Nur Floating Button sichtbar | Floating Button klicken |
+| `false` | `chat` | Nur Floating Button sichtbar | Floating Button klicken |
+| `false` | `thankyou` | Nur Floating Button sichtbar | Floating Button klicken |
+| `true` | `consent` | Panel offen, Consent-Screen | "Los geht's" klicken, X-Button klicken |
+| `true` | `chat` | Panel offen, Chat-Screen | Nachrichten senden (Phase 3), X-Button klicken |
+| `true` | `thankyou` | Panel offen, Danke-Screen | X-Button klicken, wartet auf Auto-Close |
 
 > **Rule:** Different UI or different actions = separate state
 
 ### Transitions
 
-| Current State | Trigger | UI Feedback | Next State | Business Rules |
-|---------------|---------|-------------|------------|----------------|
-| `closed` | `floating-button` -> click | Panel Slide-Up (300ms), Button verschwindet | `consent` (oder letzter State) | Wenn vorher schon mal geoeffnet: zurueck zum letzten State |
-| `consent` | `consent-cta` -> click | Consent-Screen wird durch Chat ersetzt | `chat` | -- |
-| `consent` | `close-button` -> click | Panel Slide-Down (300ms), Button erscheint | `closed` | State bleibt `consent` |
-| `chat` | `close-button` -> click | Panel Slide-Down (300ms), Button erscheint | `closed` | State bleibt `chat` |
-| `chat` | Interview endet (Phase 3+) | Chat wird durch Danke ersetzt | `thankyou` | -- |
-| `thankyou` | Auto-Timer (5s) | Panel Slide-Down (300ms), Button erscheint | `closed` | State wird auf `thankyou` behalten |
-| `thankyou` | `close-button` -> click | Panel Slide-Down (300ms), Button erscheint | `closed` | State wird auf `thankyou` behalten |
+| panelOpen | screen | Trigger | UI Feedback | Next panelOpen | Next screen | Business Rules |
+|-----------|--------|---------|-------------|----------------|-------------|----------------|
+| `false` | any | `floating-button` -> click | Panel Slide-Up (300ms), Button verschwindet | `true` | unveraendert | Zeigt aktuellen screen |
+| `true` | `consent` | `consent-cta` -> click | Consent-Screen wird durch Chat ersetzt | `true` | `chat` | -- |
+| `true` | any | `close-button` -> click | Panel Slide-Down (300ms), Button erscheint | `false` | unveraendert | screen bleibt erhalten |
+| `true` | `chat` | Interview endet (Phase 3+) | Chat wird durch Danke ersetzt | `true` | `thankyou` | -- |
+| `true` | `thankyou` | Auto-Timer (5s) | Panel Slide-Down (300ms), Button erscheint | `false` | `consent` | **Reset:** screen wird auf `consent` zurueckgesetzt fuer naechstes Interview |
+| `true` | `thankyou` | `close-button` -> click | Panel Slide-Down (300ms), Button erscheint | `false` | `consent` | **Reset:** screen wird auf `consent` zurueckgesetzt fuer naechstes Interview |
+
+### Initial State
+
+| Dimension | Wert |
+|-----------|------|
+| `panelOpen` | `false` |
+| `screen` | `consent` |
 
 ---
 
@@ -201,8 +220,9 @@ Vorhanden:
 - Floating Button z-index muss hoch genug sein (z-index: 9999+)
 - Panel z-index muss ueber Floating Button liegen
 - Mobile Breakpoint: <= 768px -> Fullscreen
-- Auto-Close Timer auf Danke-Screen: ~5 Sekunden
-- State-Persistenz: Beim Schliessen und Wieder-Oeffnen des Panels bleibt der aktuelle Screen erhalten
+- Auto-Close Timer auf Danke-Screen: ~5 Sekunden, danach Reset auf `consent`
+- Screen-Persistenz: Beim Schliessen (X-Button) und Wieder-Oeffnen bleibt der aktuelle screen erhalten
+- Danke-Reset: Nach Auto-Close oder X-Button auf Danke-Screen wird screen auf `consent` zurueckgesetzt (neues Interview moeglich, Backend liefert Kontext via Summary-Injection in Phase 3)
 - UI-Texte konfigurierbar ueber Script-Data-Attribute oder Config-Objekt (Default: Deutsch)
 
 ---
@@ -213,8 +233,8 @@ Vorhanden:
 |-------|----------|------------|-------|
 | `data-api-url` | No | Valid URL | Backend-URL, erst in Phase 3 relevant |
 | `data-lang` | No | `de` oder `en` | Default: `de` |
-| Widget State | Internal | Enum: `closed`, `consent`, `chat`, `thankyou` | useReducer-basiert |
-| Panel Open/Closed | Internal | Boolean | Separat von Widget State (Panel kann geschlossen sein waehrend State `chat` ist) |
+| `panelOpen` | Internal | Boolean | Ob Panel sichtbar ist. useReducer-basiert |
+| `screen` | Internal | Enum: `consent`, `chat`, `thankyou` | Aktueller Screen im Panel. Unabhaengig von panelOpen |
 
 ---
 
@@ -237,7 +257,7 @@ Slice 1 (Setup) -> Slice 2 (Button + Panel) -> Slice 3 (Screens + State Machine)
 | 1 | Vite + Build Setup | vite.config.ts, tsconfig.json, Tailwind v4, IIFE-Build, Scoped CSS, Data-Attribute Parsing | `npm run build` erzeugt einzelne `widget.js`. Script-Tag in Test-HTML laedtWidget. | -- |
 | 2 | Floating Button + Panel Shell | Floating Button (Icon, Position), Panel Container (Header, X-Button, Body), Slide-Up/Down Animation, Mobile Fullscreen | Button klicken oeffnet/schliesst Panel. Responsive Test. | Slice 1 |
 | 3 | Screens + State Machine | Consent-Screen, Danke-Screen, State Machine (`useReducer`), Screen-Transitions, Auto-Close Timer, State-Persistenz bei Close/Reopen | Navigation: Consent -> Chat (leer) -> Danke. Close + Reopen zeigt letzten Screen. | Slice 2 |
-| 4 | @assistant-ui Chat-UI | @assistant-ui/react Primitives einbinden (Thread, Composer), Statische Welcome-Message, Styling an Widget-Theme anpassen | Chat-Screen zeigt gestylte UI mit Eingabefeld. Kein Backend noetig. | Slice 3 |
+| 4 | @assistant-ui Chat-UI | @assistant-ui/react Primitives einbinden (Thread, Composer), Leerer Chat mit offenem Composer, Styling an Widget-Theme anpassen | Chat-Screen zeigt gestylte UI mit leerem Thread und Eingabefeld. Kein Backend noetig. | Slice 3 |
 
 ### Recommended Order
 
@@ -271,7 +291,7 @@ Slice 1 (Setup) -> Slice 2 (Button + Panel) -> Slice 3 (Screens + State Machine)
 | # | Question | Options | Recommended | Decision |
 |---|----------|---------|-------------|----------|
 | 1 | Soll `@assistant-ui/react-ui` (Styled Components) oder nur Primitives verwendet werden? | A) react-ui (fertige Styles) B) Nur Primitives (custom Styles) | A) react-ui als Basis | react-ui als Basis, dann an Widget-Theme anpassen |
-| 2 | Wie soll der Chat-Screen in Phase 2 ohne Backend aussehen? | A) Welcome-Message B) Leerer Chat | A) Welcome-Message | Welcome-Message: statische System-Nachricht |
+| 2 | Wie soll der Chat-Screen in Phase 2 ohne Backend aussehen? | A) Welcome-Message B) Leerer Chat C) Kein Text | C) Kein Text | Leerer Chat -- kein Welcome-Text. Composer offen (wird in Phase 3 angebunden). |
 | 3 | Phase 2 + 3 zusammenfassen oder getrennt? | A) Getrennt B) Zusammen | A) Getrennt | Getrennt lassen -- Phase 2 statisch, Phase 3 Backend-Anbindung |
 
 ---
@@ -305,5 +325,8 @@ Slice 1 (Setup) -> Slice 2 (Button + Panel) -> Slice 3 (Screens + State Machine)
 | 10 | Animation beim Oeffnen/Schliessen? | Slide-Up (300ms) |
 | 11 | Close-Verhalten? | X-Button im Header, State bleibt beim Schliessen erhalten |
 | 12 | @assistant-ui/react-ui (Styled Components) oder nur Primitives? | react-ui als Basis, dann an Widget-Theme anpassen |
-| 13 | Was zeigt der Chat-Screen in Phase 2 ohne Backend? | Welcome-Message (statische System-Nachricht) |
+| 13 | Was zeigt der Chat-Screen in Phase 2 ohne Backend? | Leerer Chat, kein Welcome-Text. Composer offen aber ohne Backend. |
 | 14 | Phase 2 + Phase 3 zusammenfassen? | Getrennt lassen -- Phase 2 statisches Widget, Phase 3 Backend-Anbindung |
+| 15 | Soll die State Machine als flacher State oder 2 Dimensionen modelliert werden? | 2 Dimensionen: panelOpen (boolean) + screen (consent/chat/thankyou) -- klarer fuer Architecture-Agent |
+| 16 | Was passiert nach Danke-Screen Auto-Close wenn User erneut oeffnet? | Reset auf consent -- neues Interview. Backend liefert Kontext via Summary-Injection (Phase 3). |
+| 17 | Composer in Phase 2: disabled, hidden oder offen? | Offen lassen -- wird in Phase 3 angebunden. Kein User wird es in Phase 2 nutzen. |
