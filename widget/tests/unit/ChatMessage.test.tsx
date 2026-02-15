@@ -16,10 +16,10 @@ vi.mock('@assistant-ui/react', () => ({
       if (user) return <>{children}</>
       return null
     },
-    Content: ({ components }: { components: { Text: React.FC<{ part: { text: string } }> } }) => {
+    Content: ({ components }: { components: { Text: React.FC<{ text: string }> } }) => {
       // Render the Text component with mock text
       const TextComponent = components.Text
-      return <TextComponent part={{ text: 'Test message content' }} />
+      return <TextComponent text="Test message content" />
     },
   },
 }))

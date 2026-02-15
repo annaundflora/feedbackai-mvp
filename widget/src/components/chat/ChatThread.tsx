@@ -1,5 +1,4 @@
-import React from 'react'
-import { ThreadPrimitive, MessagePrimitive } from '@assistant-ui/react'
+import { ThreadPrimitive } from '@assistant-ui/react'
 import { ChatMessage } from './ChatMessage'
 
 export function ChatThread() {
@@ -36,11 +35,7 @@ export function ChatThread() {
 
       {/* Message List */}
       <ThreadPrimitive.Viewport className="px-4 py-2">
-        <ThreadPrimitive.Messages>
-          <MessagePrimitive.Root>
-            <ChatMessage />
-          </MessagePrimitive.Root>
-        </ThreadPrimitive.Messages>
+        <ThreadPrimitive.Messages components={{ UserMessage: ChatMessage, AssistantMessage: ChatMessage }} />
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   )

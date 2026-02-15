@@ -1,4 +1,3 @@
-import React from 'react'
 import { ComposerPrimitive } from '@assistant-ui/react'
 
 interface ChatComposerProps {

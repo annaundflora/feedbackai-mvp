@@ -8,7 +8,7 @@ import type { ChatModelAdapter } from '@assistant-ui/react'
  * In Phase 3 wird dieser Adapter ersetzt durch einen, der SSE-Backend aufruft.
  */
 const dummyChatModelAdapter: ChatModelAdapter = {
-  async *run({ messages, abortSignal }) {
+  async *run() {
     // Phase 2: Keine Antwort
     // User kann tippen, aber es kommt keine Response
 

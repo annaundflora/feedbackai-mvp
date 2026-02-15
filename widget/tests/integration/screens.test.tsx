@@ -60,22 +60,36 @@ describe('integration: ConsentScreen', () => {
 })
 
 describe('integration: ChatScreen', () => {
+  const mockConfig = {
+    apiUrl: null,
+    lang: 'de',
+    texts: {
+      panelTitle: 'Feedback',
+      consentHeadline: 'Ihr Feedback zaehlt!',
+      consentBody: 'Wir moechten Ihnen ein paar kurze Fragen stellen.',
+      consentCta: "Los geht's",
+      thankYouHeadline: 'Vielen Dank!',
+      thankYouBody: 'Ihr Feedback hilft uns, besser zu werden.',
+      composerPlaceholder: 'Nachricht eingeben...',
+    },
+  }
+
   afterEach(() => {
     cleanup()
   })
 
   it('should render placeholder text "Chat bereit"', () => {
-    render(<ChatScreen />)
-    expect(screen.getByText('Chat bereit')).toBeInTheDocument()
+    render(<ChatScreen config={mockConfig} />)
+    expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
   })
 
   it('should render composer placeholder', () => {
-    render(<ChatScreen />)
-    expect(screen.getByText('Nachricht eingeben...')).toBeInTheDocument()
+    render(<ChatScreen config={mockConfig} />)
+    expect(screen.getByPlaceholderText('Nachricht eingeben...')).toBeInTheDocument()
   })
 
   it('should render chat icon with aria-hidden', () => {
-    render(<ChatScreen />)
+    render(<ChatScreen config={mockConfig} />)
     const svgs = document.querySelectorAll('svg[aria-hidden="true"]')
     expect(svgs.length).toBeGreaterThan(0)
   })

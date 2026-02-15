@@ -45,7 +45,7 @@ function ScreenRouter({
         />
       )
     case 'chat':
-      return <ChatScreen />
+      return <ChatScreen config={config} />
     case 'thankyou':
       return (
         <ThankYouScreen
@@ -138,8 +138,8 @@ describe('Slice-03 Screens + State Machine: Acceptance', () => {
     // WHEN: User clicks CTA
     fireEvent.click(screen.getByText(TEST_CONFIG.texts.consentCta))
 
-    // THEN: Chat Screen placeholder is displayed
-    expect(screen.getByText('Chat bereit')).toBeInTheDocument()
+    // THEN: Chat Screen is displayed
+    expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
     expect(screen.queryByText(TEST_CONFIG.texts.consentHeadline)).not.toBeInTheDocument()
   })
 
@@ -149,14 +149,14 @@ describe('Slice-03 Screens + State Machine: Acceptance', () => {
     // GIVEN: Navigate to Chat Screen
     fireEvent.click(screen.getByLabelText('Feedback geben'))
     fireEvent.click(screen.getByText(TEST_CONFIG.texts.consentCta))
-    expect(screen.getByText('Chat bereit')).toBeInTheDocument()
+    expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
 
     // WHEN: User clicks X-Button (close)
     const closeButton = screen.getByLabelText('Panel schließen')
     fireEvent.click(closeButton)
 
     // THEN: Panel closes (Chat Screen no longer visible)
-    expect(screen.queryByText('Chat bereit')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bereit für Ihr Feedback')).not.toBeInTheDocument()
     // FloatingButton becomes visible again
     expect(screen.getByLabelText('Feedback geben')).toBeInTheDocument()
   })
@@ -167,17 +167,17 @@ describe('Slice-03 Screens + State Machine: Acceptance', () => {
     // GIVEN: Navigate to Chat, then close panel
     fireEvent.click(screen.getByLabelText('Feedback geben'))
     fireEvent.click(screen.getByText(TEST_CONFIG.texts.consentCta))
-    expect(screen.getByText('Chat bereit')).toBeInTheDocument()
+    expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
 
     // Close panel
     fireEvent.click(screen.getByLabelText('Panel schließen'))
-    expect(screen.queryByText('Chat bereit')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bereit für Ihr Feedback')).not.toBeInTheDocument()
 
     // WHEN: User reopens panel
     fireEvent.click(screen.getByLabelText('Feedback geben'))
 
     // THEN: Chat Screen is still displayed (state persisted), NOT Consent
-    expect(screen.getByText('Chat bereit')).toBeInTheDocument()
+    expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
     expect(screen.queryByText(TEST_CONFIG.texts.consentHeadline)).not.toBeInTheDocument()
   })
 

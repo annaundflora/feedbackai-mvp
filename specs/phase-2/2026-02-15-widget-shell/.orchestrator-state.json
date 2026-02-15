@@ -2,10 +2,10 @@
   "spec_path": "specs/phase-2/2026-02-15-widget-shell",
   "feature_name": "widget-shell",
   "status": "in_progress",
-  "current_state": "implementing",
+  "current_state": "auto_fixing",
   "current_slice_id": "slice-04-assistant-ui-chat",
-  "retry_count": 0,
-  "failed_stage": null,
+  "retry_count": 1,
+  "failed_stage": "regression",
   "waves": [
     {
       "wave_id": 1,

@@ -1,4 +1,3 @@
-import React from 'react'
 import { AssistantRuntimeProvider } from '@assistant-ui/react'
 import { useWidgetChatRuntime } from '../../lib/chat-runtime'
 import { ChatThread } from '../chat/ChatThread'
