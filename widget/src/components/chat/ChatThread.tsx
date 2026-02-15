@@ -1,6 +1,7 @@
 import { ThreadPrimitive } from '@assistant-ui/react'
 import { useThread } from '@assistant-ui/react'
 import { ChatMessage } from './ChatMessage'
+import { AssistantMessage } from './AssistantMessage'
 import { LoadingIndicator } from './LoadingIndicator'
 import { TypingIndicator } from './TypingIndicator'
 
@@ -50,7 +51,7 @@ export function ChatThread() {
 
       {/* Message List */}
       <ThreadPrimitive.Viewport className="px-4 py-2">
-        <ThreadPrimitive.Messages components={{ UserMessage: ChatMessage, AssistantMessage: ChatMessage }} />
+        <ThreadPrimitive.Messages components={{ UserMessage: ChatMessage, AssistantMessage: AssistantMessage }} />
         {showTypingIndicator && <TypingIndicator />}
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
