@@ -9,7 +9,7 @@ interface ChatScreenProps {
 }
 
 export function ChatScreen({ config }: ChatScreenProps) {
-  const runtime = useWidgetChatRuntime()
+  const runtime = useWidgetChatRuntime(config.apiUrl)
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

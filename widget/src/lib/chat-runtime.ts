@@ -1,31 +1,71 @@
 import { useLocalRuntime } from '@assistant-ui/react'
 import type { ChatModelAdapter } from '@assistant-ui/react'
+import { useRef, useMemo } from 'react'
+import { getOrCreateAnonymousId } from './anonymous-id'
+import { createApiClient } from './api-client'
+import { streamStart } from './sse-parser'
 
 /**
- * Dummy Chat Model Adapter für Phase 2
+ * Create ChatModelAdapter that connects to backend SSE endpoints.
+ * Handles START flow (no session) and MESSAGE flow (existing session).
  *
- * In Phase 2 gibt es kein Backend. Der Adapter returned nichts.
- * In Phase 3 wird dieser Adapter ersetzt durch einen, der SSE-Backend aufruft.
+ * @param apiUrl - Base URL for API endpoints
+ * @param sessionIdRef - Mutable ref to store session_id from metadata event
+ * @returns ChatModelAdapter compatible with @assistant-ui/react
  */
-const dummyChatModelAdapter: ChatModelAdapter = {
-  async *run() {
-    // Phase 2: Keine Antwort
-    // User kann tippen, aber es kommt keine Response
+function createChatModelAdapter(
+  apiUrl: string,
+  sessionIdRef: React.MutableRefObject<string | null>
+): ChatModelAdapter {
+  const apiClient = createApiClient(apiUrl)
 
-    // In Phase 3: Hier würde SSE-Call zum Backend stattfinden
-    // yield { type: 'text-delta', textDelta: '...' }
+  return {
+    async *run({ abortSignal }) {
+      // If no session yet, this is a START flow
+      if (!sessionIdRef.current) {
+        const anonymousId = getOrCreateAnonymousId()
+        const response = await apiClient.startInterview(anonymousId, { signal: abortSignal })
 
-    // Dummy: Return nothing
-    return
+        let text = ''
+        for await (const event of streamStart(response)) {
+          if (event.type === 'metadata') {
+            sessionIdRef.current = event.session_id
+          } else if (event.type === 'text-delta') {
+            text += event.content
+            yield { content: [{ type: 'text' as const, text }] }
+          } else if (event.type === 'error') {
+            throw new Error(event.message)
+          }
+          // text-done: loop ends naturally
+        }
+        return
+      }
+
+      // MESSAGE flow handled by Slice 06
+    }
   }
 }
 
 /**
- * Custom Hook für Widget Chat Runtime
+ * Custom Hook for Widget Chat Runtime.
  *
- * Verwendet useLocalRuntime mit Dummy-Adapter in Phase 2.
- * In Phase 3: Adapter wird ersetzt, Hook-Interface bleibt gleich.
+ * Creates a local runtime with ChatModelAdapter that connects to backend.
+ * In Slice 05: Handles START flow only.
+ * In Slice 06: Will be extended with MESSAGE flow.
+ *
+ * @param apiUrl - Base URL for API endpoints (from config.apiUrl)
+ * @returns Local runtime instance for @assistant-ui
  */
-export function useWidgetChatRuntime() {
-  return useLocalRuntime(dummyChatModelAdapter)
+export function useWidgetChatRuntime(apiUrl: string | null) {
+  const sessionIdRef = useRef<string | null>(null)
+
+  const adapter = useMemo(() => {
+    if (!apiUrl) {
+      // Fallback: dummy adapter when no API URL configured
+      return { async *run() { return } } as ChatModelAdapter
+    }
+    return createChatModelAdapter(apiUrl, sessionIdRef)
+  }, [apiUrl])
+
+  return useLocalRuntime(adapter)
 }
