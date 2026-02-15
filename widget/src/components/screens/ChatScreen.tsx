@@ -1,5 +1,3 @@
-import React from 'react'
-
 export function ChatScreen() {
   return (
     <div className="flex flex-col h-full screen-container">
