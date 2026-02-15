@@ -1,16 +1,15 @@
 import { AssistantRuntimeProvider } from '@assistant-ui/react'
-import { useWidgetChatRuntime } from '../../lib/chat-runtime'
+import type { useWidgetChatRuntime } from '../../lib/chat-runtime'
 import { ChatThread } from '../chat/ChatThread'
 import { ChatComposer } from '../chat/ChatComposer'
 import type { WidgetConfig } from '../../config'
 
 interface ChatScreenProps {
   config: WidgetConfig
+  runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
 }
 
-export function ChatScreen({ config }: ChatScreenProps) {
-  const runtime = useWidgetChatRuntime(config.apiUrl)
-
+export function ChatScreen({ config, runtime }: ChatScreenProps) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <div className="flex flex-col h-full">

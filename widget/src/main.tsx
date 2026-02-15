@@ -7,6 +7,7 @@ import { ConsentScreen } from './components/screens/ConsentScreen'
 import { ChatScreen } from './components/screens/ChatScreen'
 import { ThankYouScreen } from './components/screens/ThankYouScreen'
 import { widgetReducer, initialState, WidgetScreen } from './reducer'
+import { useWidgetChatRuntime } from './lib/chat-runtime'
 import './styles/widget.css'
 
 // Screen Router Component
@@ -14,12 +15,14 @@ function ScreenRouter({
   screen,
   config,
   onAcceptConsent,
-  onAutoClose
+  onAutoClose,
+  runtime
 }: {
   screen: WidgetScreen
   config: WidgetConfig
   onAcceptConsent: () => void
   onAutoClose: () => void
+  runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
 }) {
   switch (screen) {
     case 'consent':
@@ -33,7 +36,7 @@ function ScreenRouter({
       )
 
     case 'chat':
-      return <ChatScreen config={config} />
+      return <ChatScreen config={config} runtime={runtime} />
 
     case 'thankyou':
       return (
@@ -52,9 +55,19 @@ function ScreenRouter({
 // Main Widget Component
 function Widget({ config }: { config: WidgetConfig }) {
   const [state, dispatch] = useReducer(widgetReducer, initialState)
+  const { runtime, controls } = useWidgetChatRuntime(config.apiUrl)
 
   const handleOpenPanel = () => dispatch({ type: 'OPEN_PANEL' })
-  const handleClosePanel = () => dispatch({ type: 'CLOSE_PANEL' })
+
+  const handleClosePanel = async () => {
+    if (controls.hasActiveSession()) {
+      await controls.endInterview()
+      dispatch({ type: 'GO_TO_THANKYOU' })
+    } else {
+      dispatch({ type: 'CLOSE_PANEL' })
+    }
+  }
+
   const handleAcceptConsent = () => dispatch({ type: 'GO_TO_CHAT' })
   const handleAutoClose = () => dispatch({ type: 'CLOSE_AND_RESET' })
 
@@ -74,6 +87,7 @@ function Widget({ config }: { config: WidgetConfig }) {
           config={config}
           onAcceptConsent={handleAcceptConsent}
           onAutoClose={handleAutoClose}
+          runtime={runtime}
         />
       </Panel>
     </div>
