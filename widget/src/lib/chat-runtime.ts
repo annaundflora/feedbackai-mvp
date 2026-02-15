@@ -3,7 +3,7 @@ import type { ChatModelAdapter } from '@assistant-ui/react'
 import { useRef, useMemo } from 'react'
 import { getOrCreateAnonymousId } from './anonymous-id'
 import { createApiClient } from './api-client'
-import { streamStart } from './sse-parser'
+import { streamStart, streamMessage } from './sse-parser'
 
 /**
  * Create ChatModelAdapter that connects to backend SSE endpoints.
@@ -20,7 +20,7 @@ function createChatModelAdapter(
   const apiClient = createApiClient(apiUrl)
 
   return {
-    async *run({ abortSignal }) {
+    async *run({ messages, abortSignal }) {
       // If no session yet, this is a START flow
       if (!sessionIdRef.current) {
         const anonymousId = getOrCreateAnonymousId()
@@ -41,7 +41,31 @@ function createChatModelAdapter(
         return
       }
 
-      // MESSAGE flow handled by Slice 06
+      // MESSAGE flow: session exists, send last user message
+      const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
+      if (!lastUserMessage) return
+
+      const messageText = lastUserMessage.content
+        .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
+        .map(c => c.text)
+        .join('')
+
+      const response = await apiClient.sendMessage(
+        sessionIdRef.current,
+        messageText,
+        { signal: abortSignal }
+      )
+
+      let text = ''
+      for await (const event of streamMessage(response)) {
+        if (event.type === 'text-delta') {
+          text += event.content
+          yield { content: [{ type: 'text' as const, text }] }
+        } else if (event.type === 'error') {
+          throw new Error(event.message)
+        }
+        // text-done: loop ends naturally
+      }
     }
   }
 }
@@ -50,8 +74,7 @@ function createChatModelAdapter(
  * Custom Hook for Widget Chat Runtime.
  *
  * Creates a local runtime with ChatModelAdapter that connects to backend.
- * In Slice 05: Handles START flow only.
- * In Slice 06: Will be extended with MESSAGE flow.
+ * Handles both START flow (no session) and MESSAGE flow (existing session).
  *
  * @param apiUrl - Base URL for API endpoints (from config.apiUrl)
  * @returns Local runtime instance for @assistant-ui
