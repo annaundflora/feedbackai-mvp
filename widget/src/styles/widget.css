@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Tailwind v4 Design Tokens */
+@theme {
+  /* Colors */
+  --color-brand: oklch(0.55 0.15 240);
+  --color-brand-hover: oklch(0.45 0.15 240);
+  --color-text: oklch(0.2 0 0);
+  --color-text-secondary: oklch(0.45 0 0);
+  --color-bg: oklch(1 0 0);
+  --color-border: oklch(0.9 0 0);
+
+  /* Spacing */
+  --spacing-panel: 1rem;
+
+  /* Shadows */
+  --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  /* Animations */
+  --transition-slide: 300ms ease-out;
+}
+
+/* CSS Reset + Scoping */
+.feedbackai-widget {
+  /* Reset */
+  all: initial;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+
+  /* Ensure children inherit reset */
+  * {
+    box-sizing: border-box;
+  }
+}
+
+/* Scope all Tailwind utilities to widget container */
+@layer utilities {
+  .feedbackai-widget .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+
+  .feedbackai-widget .btn-primary {
+    @apply bg-brand text-white hover:bg-brand-hover;
+  }
+}
