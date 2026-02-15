@@ -1,4 +1,3 @@
-import React from 'react'
 import { ChatBubbleIcon } from './icons/ChatBubbleIcon'
 
 interface FloatingButtonProps {

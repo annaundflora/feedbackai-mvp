@@ -1,5 +1,3 @@
-import React from 'react'
-
 export function ChatBubbleIcon({ className }: { className?: string }) {
   return (
     <svg
