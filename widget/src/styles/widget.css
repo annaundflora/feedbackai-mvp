@@ -130,6 +130,17 @@
   animation: message-slide-in 200ms ease-out;
 }
 
+/* Loading & Typing Indicator Animations */
+@keyframes feedbackai-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes feedbackai-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 /* Scrollbar Styling (für Thread) */
 .feedbackai-widget .chat-thread::-webkit-scrollbar {
   width: 6px;

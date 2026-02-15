@@ -22,12 +22,17 @@ function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: 
   // Monitor thread for errors
   useEffect(() => {
     const unsubscribe = threadRuntime.subscribe(() => {
-      const messages = threadRuntime.messages
+      const state = threadRuntime.getState()
+      const messages = state.messages
       const lastMessage = messages[messages.length - 1]
 
-      // Check if last message has error
-      if (lastMessage?.role === 'assistant' && lastMessage.status?.type === 'error') {
-        const rawError = (lastMessage.status as any).error
+      // Check if last message has error (status.type === 'incomplete' && status.reason === 'error')
+      if (
+        lastMessage?.role === 'assistant' &&
+        lastMessage.status?.type === 'incomplete' &&
+        lastMessage.status.reason === 'error'
+      ) {
+        const rawError = lastMessage.status.error
         const classified = classifyError(rawError)
 
         // Handle 409 (session completed) -> auto-redirect to ThankYou
@@ -41,7 +46,10 @@ function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: 
           action: classified.action,
           rawError
         })
-      } else if (error && lastMessage?.status?.type !== 'error') {
+      } else if (
+        error &&
+        !(lastMessage?.status?.type === 'incomplete' && lastMessage.status.reason === 'error')
+      ) {
         // Clear error if last message is not an error
         setError(null)
       }
@@ -53,8 +61,10 @@ function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: 
   const handleRetry = () => {
     setError(null)
     // Trigger retry by canceling and restarting the current message
+    const state = threadRuntime.getState()
+    const lastMessage = state.messages[state.messages.length - 1]
     threadRuntime.cancelRun()
-    threadRuntime.startRun()
+    threadRuntime.startRun({ parentId: lastMessage?.id || null })
   }
 
   const handleRestart = async () => {
