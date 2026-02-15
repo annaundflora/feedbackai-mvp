@@ -93,3 +93,28 @@ export async function* streamStart(response: Response): AsyncGenerator<SSEEvent>
 
   yield* readSSEStream(response.body)
 }
+
+/**
+ * Validate /message response and return SSE stream reader.
+ * Handles 404 (session expired) and 409 (session completed) specifically.
+ *
+ * @param response - Fetch Response from /message API call
+ * @yields Parsed SSEEvent objects
+ * @throws ApiError if response is not ok or body is missing
+ */
+export async function* streamMessage(response: Response): AsyncGenerator<SSEEvent> {
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new ApiError(
+      error.error || 'Request failed',
+      response.status,
+      error.detail
+    )
+  }
+
+  if (!response.body) {
+    throw new ApiError('No response body', 0)
+  }
+
+  yield* readSSEStream(response.body)
+}
