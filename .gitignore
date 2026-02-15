@@ -33,7 +33,7 @@ Thumbs.db
 *.log
 
 # Claude Code
-.claude/
+# .claude/
 
 # LangSmith
 .langsmith/

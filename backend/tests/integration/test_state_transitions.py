@@ -5,7 +5,6 @@ Tests state machine behavior and integration between all slices.
 
 import json
 import pytest
-from unittest.mock import AsyncMock
 
 
 def parse_sse_events(response_text: str) -> list[dict]:
@@ -42,9 +41,9 @@ class TestStateTransitions:
         assert len(metadata) == 1
 
         # Verify session is active
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
         session_id = metadata[0]["session_id"]
         assert service._sessions[session_id]["status"] == "active"
 
@@ -99,9 +98,9 @@ class TestStateTransitions:
         assert len(text_done) == 1
 
         # Session should be back to active
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
         assert service._sessions[session_id]["status"] == "active"
 
     def test_streaming_to_error_on_llm_failure(self, client, mock_graph):
@@ -210,9 +209,9 @@ class TestStateTransitions:
         )
 
         # Session should be completed
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
         assert service._sessions[session_id]["status"] == "completed"
 
     @pytest.mark.asyncio
@@ -221,9 +220,9 @@ class TestStateTransitions:
 
         Timeout triggers summarizing state.
         """
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
 
         # Create fake active session
         session_id = "test-session"
@@ -245,9 +244,9 @@ class TestStateTransitions:
 
         Timeout summary completion uses completed_timeout status.
         """
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
 
         # Create fake active session
         session_id = "test-session"
@@ -272,14 +271,26 @@ class TestCrossSliceIntegration:
 
         Settings are available to all services.
         """
+        from unittest.mock import patch
+        import os
         from app.config.settings import Settings
 
-        settings = Settings()
+        # Patch environment before creating Settings
+        with patch.dict(
+            os.environ,
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "SUPABASE_URL": "https://test.supabase.co",
+                "SUPABASE_KEY": "test-supabase-key",
+            },
+            clear=False,
+        ):
+            settings = Settings()
 
-        # Verify critical settings are loaded
-        assert settings.openrouter_api_key is not None
-        assert settings.supabase_url is not None
-        assert settings.supabase_key is not None
+            # Verify critical settings are loaded
+            assert settings.openrouter_api_key is not None
+            assert settings.supabase_url is not None
+            assert settings.supabase_key is not None
 
     def test_interview_graph_in_service(self, client, mock_graph):
         """E2E Checklist: Integration Point 2.
@@ -358,9 +369,9 @@ class TestCrossSliceIntegration:
 
         TimeoutManager is used in InterviewService.
         """
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
 
         # Service should have timeout manager
         assert hasattr(service, "_timeout_manager")
@@ -385,9 +396,9 @@ class TestCrossSliceIntegration:
 
         Timeout handler uses SummaryService and Repository.
         """
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
 
         # Create fake session
         session_id = "test-session"
@@ -428,9 +439,9 @@ class TestCrossSliceIntegration:
 
         All services are correctly injected via dependencies.
         """
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
 
         # Service should have all dependencies
         assert service._graph is not None
@@ -463,9 +474,9 @@ class TestBusinessRules:
             assert response.status_code == 200
 
         # Session should still be active
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
         assert service._sessions[session_id]["status"] == "active"
 
     def test_session_belongs_to_anonymous_id(self, client):
@@ -483,9 +494,9 @@ class TestBusinessRules:
         session_id = [e for e in events if e.get("type") == "metadata"][0]["session_id"]
 
         # Verify in-memory session has correct anonymous_id
-        from app.api.dependencies import get_interview_service
+        from app.api.dependencies import get_interview_service_for_tests
 
-        service = get_interview_service()
+        service = get_interview_service_for_tests()
         assert service._sessions[session_id]["anonymous_id"] == anonymous_id
 
     def test_last_three_summaries_loaded(self, client, mock_repository):
@@ -508,17 +519,20 @@ class TestBusinessRules:
 
         Session timeout can be configured via settings.
         """
+        from unittest.mock import patch
         from app.config.settings import Settings
         import os
 
         # Verify timeout setting exists
-        with patch.dict(os.environ, {"SESSION_TIMEOUT_SECONDS": "120"}):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "SUPABASE_URL": "https://test.supabase.co",
+                "SUPABASE_KEY": "test-supabase-key",
+                "SESSION_TIMEOUT_SECONDS": "120",
+            },
+            clear=False,
+        ):
             settings = Settings()
             assert settings.session_timeout_seconds == 120
-
-
-def patch_dict(target, *args, **kwargs):
-    """Helper for patching environment variables."""
-    from unittest.mock import patch
-
-    return patch.dict(target, *args, **kwargs)

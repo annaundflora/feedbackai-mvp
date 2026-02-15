@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FeedbackAI Widget Test - Slice 4: Chat-UI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f0f0f0;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      background: white;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-step {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #f9f9f9;
+      border-left: 3px solid #4CAF50;
+    }
+    .expected {
+      color: #2196F3;
+      font-weight: bold;
+    }
+    .note {
+      background: #FFF9C4;
+      padding: 1rem;
+      border-left: 3px solid #FFC107;
+      margin: 1rem 0;
+    }
+    .success {
+      background: #E8F5E9;
+      border-left: 3px solid #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <h1>FeedbackAI Widget Test - Slice 4: @assistant-ui Chat-UI</h1>
+
+  <div class="test-section success">
+    <h2>✅ Widget Complete - All Slices Done!</h2>
+    <p>Alle 4 Slices sind implementiert. Widget ist bereit für Phase 3 Backend-Anbindung.</p>
+  </div>
+
+  <div class="test-section">
+    <h2>Test Checklist - Chat-UI</h2>
+
+    <div class="test-step">
+      <strong>1. Chat Screen: Empty State</strong>
+      <p class="expected">✓ "Los geht's" Button klicken → Chat Screen öffnet</p>
+      <p class="expected">✓ ThreadWelcome angezeigt: "Bereit für Ihr Feedback"</p>
+      <p class="expected">✓ Chat-Icon sichtbar</p>
+      <p class="expected">✓ Composer Input-Feld am unteren Rand</p>
+      <p class="expected">✓ Placeholder: "Nachricht eingeben..."</p>
+    </div>
+
+    <div class="test-step">
+      <strong>2. Composer: Typing</strong>
+      <p class="expected">✓ Input-Feld klicken → Cursor blinkt</p>
+      <p class="expected">✓ Text tippen → Send-Button wird enabled</p>
+      <p class="expected">✓ Send-Button zeigt Pfeil-Icon</p>
+      <p class="expected">✓ Input hat Focus-Ring (blauer Ring)</p>
+    </div>
+
+    <div class="test-step">
+      <strong>3. Message senden: Enter</strong>
+      <p class="expected">✓ Text tippen + Enter drücken</p>
+      <p class="expected">✓ User-Message erscheint in Thread (rechts, blau)</p>
+      <p class="expected">✓ Slide-In Animation (200ms)</p>
+      <p class="expected">✓ Input-Feld wird geleert</p>
+      <p class="expected">✓ Send-Button wieder disabled</p>
+    </div>
+
+    <div class="test-step">
+      <strong>4. Message senden: Send-Button</strong>
+      <p class="expected">✓ Text tippen + Send-Button klicken</p>
+      <p class="expected">✓ User-Message erscheint in Thread</p>
+      <p class="expected">✓ Input-Feld wird geleert</p>
+    </div>
+
+    <div class="test-step">
+      <strong>5. Phase 2: Keine Assistant-Antwort</strong>
+      <div class="note">
+        <strong>Expected Behavior:</strong> In Phase 2 gibt es kein Backend.
+        Dummy-Adapter gibt keine Antworten zurück.
+      </div>
+      <p class="expected">✓ Nach User-Message: Keine Assistant-Antwort</p>
+      <p class="expected">✓ Kein Typing-Indicator</p>
+      <p class="expected">✓ User kann weitere Messages senden</p>
+    </div>
+
+    <div class="test-step">
+      <strong>6. Message Styling</strong>
+      <p class="expected">✓ User Messages: Rechts aligned, brand color (blau)</p>
+      <p class="expected">✓ Text lesbar, whitespace-pre-wrap</p>
+      <p class="expected">✓ Rounded corners (rounded-2xl)</p>
+      <p class="expected">✓ Max width 80% (lesbar)</p>
+    </div>
+
+    <div class="test-step">
+      <strong>7. Thread Scrollbar</strong>
+      <p class="expected">✓ Mehrere Messages senden (>5)</p>
+      <p class="expected">✓ Thread wird scrollbar</p>
+      <p class="expected">✓ Custom Scrollbar sichtbar (subtil, grau)</p>
+      <p class="expected">✓ Hover: Scrollbar wird dunkler</p>
+    </div>
+
+    <div class="test-step">
+      <strong>8. Keyboard Navigation</strong>
+      <p class="expected">✓ Tab → Composer Input fokussiert</p>
+      <p class="expected">✓ Focus-Ring sichtbar (ring-2)</p>
+      <p class="expected">✓ Enter → Message senden</p>
+      <p class="expected">✓ Shift+Enter → Neue Zeile (Textarea)</p>
+      <p class="expected">✓ Tab → Send-Button fokussiert</p>
+      <p class="expected">✓ Enter → Message senden</p>
+    </div>
+
+    <div class="test-step">
+      <strong>9. Mobile Test (<=768px)</strong>
+      <p class="expected">✓ Chat Screen Fullscreen</p>
+      <p class="expected">✓ Composer Input lesbar</p>
+      <p class="expected">✓ Send-Button Touch Target ≥44px</p>
+      <p class="expected">✓ Thread scrollbar funktioniert auf Touch</p>
+      <p class="expected">✓ Keine double-tap zoom (touch-action)</p>
+    </div>
+
+    <div class="test-step">
+      <strong>10. Reduced Motion Test</strong>
+      <div class="note">
+        <strong>How to Test:</strong>
+        - DevTools → Rendering Tab → Emulate CSS prefers-reduced-motion
+      </div>
+      <p class="expected">✓ Message Slide-In Animation disabled (instant)</p>
+      <p class="expected">✓ Keine sichtbare Animation bei Message-Erscheinen</p>
+    </div>
+
+    <div class="test-step">
+      <strong>11. Full Widget Flow</strong>
+      <p class="expected">✓ Floating Button → Panel öffnet (Consent)</p>
+      <p class="expected">✓ "Los geht's" → Chat Screen</p>
+      <p class="expected">✓ Message tippen + senden → User Message erscheint</p>
+      <p class="expected">✓ X-Button → Panel schließt (Chat-State bleibt)</p>
+      <p class="expected">✓ Button erneut → Panel öffnet (Chat-Screen mit Messages)</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Console Output Erwartung</h2>
+    <pre>
+FeedbackAI Widget mounted { lang: 'de', apiUrl: null, texts: {...} }
+    </pre>
+    <p><strong>Keine Fehler oder Warnings von @assistant-ui</strong></p>
+  </div>
+
+  <div class="test-section">
+    <h2>Bundle Size Check</h2>
+    <div class="note">
+      Nach <code>npm run build</code>:
+      <ul>
+        <li>Target: &lt;200KB gzipped</li>
+        <li>Accept: &lt;500KB ungzipped</li>
+        <li>@assistant-ui/react + React 19 sind große Dependencies</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section success">
+    <h2>Phase 3 Readiness Check</h2>
+    <p>✅ LocalRuntime integriert (Dummy-Adapter)</p>
+    <p>✅ Thread + Composer funktionieren</p>
+    <p>✅ Message-Rendering styled</p>
+    <p>✅ User kann tippen und senden</p>
+    <p>→ <strong>Phase 3:</strong> Nur Adapter austauschen (SSE-Backend-Call)</p>
+  </div>
+
+  <!-- Widget Embed -->
+  <script
+    src="./dist/widget.js"
+    data-lang="de"
+    data-api-url="http://localhost:8000"
+  ></script>
+</body>
+</html>

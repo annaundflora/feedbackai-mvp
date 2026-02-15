@@ -4,8 +4,6 @@ Tests database operations without mocking the repository.
 """
 
 import json
-import pytest
-from unittest.mock import AsyncMock, patch
 
 
 def parse_sse_events(response_text: str) -> list[dict]:

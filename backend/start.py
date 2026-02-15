@@ -74,7 +74,7 @@ def check_env_file():
 def check_dependencies():
     """Prüft ob uvicorn installiert ist"""
     try:
-        import uvicorn
+        import uvicorn  # noqa: F401
         print(f"{GREEN}✅ uvicorn gefunden{RESET}")
         return True
     except ImportError:

@@ -3,7 +3,7 @@ import pytest
 import json
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
 
 # -- Fixtures --
@@ -175,7 +175,7 @@ class TestSummaryServiceGenerate:
     async def test_generate_summary_contains_bullet_points(self, summary_service, sample_history):
         """AC 6: Summary enthaelt Bullet-Punkte mit '- '."""
         result = await summary_service.generate(sample_history)
-        lines = [l for l in result.split("\n") if l.strip()]
+        lines = [line for line in result.split("\n") if line.strip()]
         for line in lines:
             assert line.strip().startswith("- "), f"Line does not start with '- ': {line}"
 
@@ -328,7 +328,7 @@ class TestInterviewServiceSummaryEnd:
         session_id = list(service._sessions.keys())[0]
 
         # Session beenden
-        result = await service.end(session_id)
+        await service.end(session_id)
 
         mock_summary_service.generate.assert_called_once()
 

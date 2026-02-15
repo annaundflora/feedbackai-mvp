@@ -1,0 +1,29 @@
+{
+  "spec_path": "specs/phase-2/2026-02-15-widget-shell",
+  "feature_name": "widget-shell",
+  "status": "in_progress",
+  "current_state": "feature_complete",
+  "current_slice_id": "slice-04-assistant-ui-chat",
+  "retry_count": 0,
+  "failed_stage": null,
+  "waves": [
+    {
+      "wave_id": 1,
+      "slices": ["slice-01-vite-build-setup"]
+    },
+    {
+      "wave_id": 2,
+      "slices": ["slice-02-floating-button-panel-shell"]
+    },
+    {
+      "wave_id": 3,
+      "slices": ["slice-03-screens-state-machine"]
+    },
+    {
+      "wave_id": 4,
+      "slices": ["slice-04-assistant-ui-chat"]
+    }
+  ],
+  "completed_slices": ["slice-01-vite-build-setup", "slice-02-floating-button-panel-shell", "slice-03-screens-state-machine", "slice-04-assistant-ui-chat"],
+  "evidence_files": [".claude/evidence/widget-shell/slice-01-vite-build-setup.json", ".claude/evidence/widget-shell/slice-02-floating-button-panel-shell.json", ".claude/evidence/widget-shell/slice-03-screens-state-machine.json", ".claude/evidence/widget-shell/slice-04-assistant-ui-chat.json"]
+}

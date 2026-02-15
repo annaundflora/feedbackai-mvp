@@ -1,0 +1,48 @@
+{
+  "spec_path": "specs/phase-2/2026-02-15-widget-shell",
+  "status": "completed",
+  "phase": "completed",
+  "started_at": "2026-02-15T00:00:00Z",
+  "completed_at": "2026-02-15T00:00:00Z",
+  "total_slices": 4,
+  "current_slice_index": 4,
+  "slices": [
+    {
+      "number": 1,
+      "name": "vite-build-setup",
+      "description": "Vite + Build Setup",
+      "status": "approved",
+      "retries": 0,
+      "dependencies": []
+    },
+    {
+      "number": 2,
+      "name": "floating-button-panel-shell",
+      "description": "Floating Button + Panel Shell",
+      "status": "approved",
+      "retries": 0,
+      "dependencies": [1]
+    },
+    {
+      "number": 3,
+      "name": "screens-state-machine",
+      "description": "Screens + State Machine",
+      "status": "approved",
+      "retries": 0,
+      "dependencies": [2]
+    },
+    {
+      "number": 4,
+      "name": "assistant-ui-chat",
+      "description": "@assistant-ui Chat-UI",
+      "status": "approved",
+      "retries": 0,
+      "dependencies": [3]
+    }
+  ],
+  "approved_slices": [1, 2, 3, 4],
+  "failed_slices": [],
+  "gate3_retries": 0,
+  "last_action": "Gate 3 APPROVED - Ready for Orchestration",
+  "last_updated": "2026-02-15T00:00:00Z"
+}

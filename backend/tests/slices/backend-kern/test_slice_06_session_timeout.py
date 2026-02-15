@@ -1,8 +1,7 @@
 # backend/tests/slices/backend-kern/test_slice_06_session_timeout.py
 import pytest
-import json
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
 

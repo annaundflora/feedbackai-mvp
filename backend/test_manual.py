@@ -5,7 +5,6 @@ Interaktives Manual Test Script für FeedbackAI Backend
 import requests
 import json
 import sys
-from time import sleep
 
 BASE_URL = "http://localhost:8000"
 YELLOW = "\033[93m"
@@ -222,7 +221,7 @@ def test_summary_injection():
                                 f"{BASE_URL}/api/interview/end",
                                 json={"session_id": session_id}
                             )
-                    except:
+                    except Exception:
                         pass
 
         print(f"\n{GREEN}✅ Test abgeschlossen{RESET}")

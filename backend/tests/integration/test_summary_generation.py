@@ -5,7 +5,6 @@ Tests summary creation, storage, and injection into subsequent sessions.
 
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 
 def parse_sse_events(response_text: str) -> list[dict]:
