@@ -16,13 +16,19 @@ function ScreenRouter({
   config,
   onAcceptConsent,
   onAutoClose,
-  runtime
+  onRestart,
+  onRedirectToThankYou,
+  runtime,
+  controls
 }: {
   screen: WidgetScreen
   config: WidgetConfig
   onAcceptConsent: () => void
   onAutoClose: () => void
+  onRestart: () => void
+  onRedirectToThankYou: () => void
   runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
+  controls: ReturnType<typeof useWidgetChatRuntime>['controls']
 }) {
   switch (screen) {
     case 'consent':
@@ -36,7 +42,15 @@ function ScreenRouter({
       )
 
     case 'chat':
-      return <ChatScreen config={config} runtime={runtime} />
+      return (
+        <ChatScreen
+          config={config}
+          runtime={runtime}
+          controls={controls}
+          onRestart={onRestart}
+          onRedirectToThankYou={onRedirectToThankYou}
+        />
+      )
 
     case 'thankyou':
       return (
@@ -70,6 +84,8 @@ function Widget({ config }: { config: WidgetConfig }) {
 
   const handleAcceptConsent = () => dispatch({ type: 'GO_TO_CHAT' })
   const handleAutoClose = () => dispatch({ type: 'CLOSE_AND_RESET' })
+  const handleRestart = () => dispatch({ type: 'CLOSE_AND_RESET' })
+  const handleRedirectToThankYou = () => dispatch({ type: 'GO_TO_THANKYOU' })
 
   return (
     <div className="feedbackai-widget">
@@ -87,7 +103,10 @@ function Widget({ config }: { config: WidgetConfig }) {
           config={config}
           onAcceptConsent={handleAcceptConsent}
           onAutoClose={handleAutoClose}
+          onRestart={handleRestart}
+          onRedirectToThankYou={handleRedirectToThankYou}
           runtime={runtime}
+          controls={controls}
         />
       </Panel>
     </div>

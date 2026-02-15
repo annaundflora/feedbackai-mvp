@@ -131,14 +131,25 @@ function buildMessages(
 
 /**
  * Extract the adapter from useWidgetChatRuntime result.
- * Because we mock useLocalRuntime to pass through the adapter.
+ * Slice 07 changed the API: useWidgetChatRuntime now returns { runtime, controls }.
+ * The adapter is stored in runtime (which is mocked to return { adapter, _runtime: true }).
  */
 function getAdapterWithSession(apiUrl: string, sessionId: string) {
   // Set sessionIdRef.current to a session_id so the MESSAGE flow branch is taken
   const sessionRef = { current: sessionId }
-  mockUseRef.mockReturnValue(sessionRef)
+  const abortControllerRef = { current: null }
 
-  const result = useWidgetChatRuntime(apiUrl) as unknown as {
+  // Mock useRef to return our test refs in order: sessionIdRef first, abortControllerRef second
+  let useRefCallCount = 0
+  mockUseRef.mockImplementation((initialValue: unknown) => {
+    useRefCallCount++
+    if (useRefCallCount === 1) return sessionRef
+    if (useRefCallCount === 2) return abortControllerRef
+    return { current: initialValue }
+  })
+
+  const { runtime } = useWidgetChatRuntime(apiUrl)
+  const runtimeWithAdapter = runtime as unknown as {
     adapter: {
       run: (params: {
         messages: Array<{ role: string; content: Array<{ type: string; text: string }> }>
@@ -146,7 +157,7 @@ function getAdapterWithSession(apiUrl: string, sessionId: string) {
       }) => AsyncGenerator<unknown>
     }
   }
-  return { adapter: result.adapter, sessionRef }
+  return { adapter: runtimeWithAdapter.adapter, sessionRef }
 }
 
 // ---------------------------------------------------------------------------

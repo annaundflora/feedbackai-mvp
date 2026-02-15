@@ -2,15 +2,17 @@ import { ComposerPrimitive } from '@assistant-ui/react'
 
 interface ChatComposerProps {
   placeholder?: string
+  disabled?: boolean
 }
 
-export function ChatComposer({ placeholder = 'Nachricht eingeben...' }: ChatComposerProps) {
+export function ChatComposer({ placeholder = 'Nachricht eingeben...', disabled = false }: ChatComposerProps) {
   return (
     <ComposerPrimitive.Root className="p-4">
       <div className="flex gap-2 items-end">
         {/* Input Field */}
         <ComposerPrimitive.Input
           placeholder={placeholder}
+          disabled={disabled}
           className="
             flex-1 px-4 py-3 rounded-xl
             bg-gray-100 text-gray-900
@@ -21,6 +23,7 @@ export function ChatComposer({ placeholder = 'Nachricht eingeben...' }: ChatComp
             transition-all duration-200
             max-h-32
             composer-input
+            disabled:opacity-50 disabled:cursor-not-allowed
           "
           rows={1}
           autoFocus={false}
@@ -28,6 +31,7 @@ export function ChatComposer({ placeholder = 'Nachricht eingeben...' }: ChatComp
 
         {/* Send Button */}
         <ComposerPrimitive.Send
+          disabled={disabled}
           className="
             flex-shrink-0 w-10 h-10 rounded-xl
             bg-brand text-white

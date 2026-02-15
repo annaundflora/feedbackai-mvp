@@ -1,0 +1,27 @@
+{
+  "spec_path": "specs/phase-3/2026-02-15-backend-widget-integration",
+  "status": "completed",
+  "phase": "completed",
+  "started_at": "2026-02-15T10:00:00Z",
+  "completed_at": "2026-02-15T11:30:00Z",
+  "total_slices": 11,
+  "current_slice_index": 11,
+  "slices": [
+    { "number": 1, "name": "anonymous-id-api-client", "status": "approved", "retries": 0 },
+    { "number": 2, "name": "sse-client-start", "status": "approved", "retries": 0 },
+    { "number": 3, "name": "sse-client-message", "status": "approved", "retries": 0 },
+    { "number": 4, "name": "interview-end", "status": "approved", "retries": 0 },
+    { "number": 5, "name": "adapter-start-flow", "status": "approved", "retries": 0 },
+    { "number": 6, "name": "adapter-message-flow", "status": "approved", "retries": 0 },
+    { "number": 7, "name": "interview-end-logic", "status": "approved", "retries": 0 },
+    { "number": 8, "name": "error-handling", "status": "approved", "retries": 0 },
+    { "number": 9, "name": "loading-typing-indicators", "status": "approved", "retries": 1 },
+    { "number": 10, "name": "assistant-message-rendering", "status": "approved", "retries": 1 },
+    { "number": 11, "name": "e2e-integration-tests", "status": "approved", "retries": 1 }
+  ],
+  "approved_slices": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  "failed_slices": [],
+  "gate3_retries": 0,
+  "last_action": "Gate 3 APPROVED - Ready for Orchestration",
+  "last_updated": "2026-02-15T11:30:00Z"
+}

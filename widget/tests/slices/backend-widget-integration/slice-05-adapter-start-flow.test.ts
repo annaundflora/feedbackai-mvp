@@ -102,15 +102,17 @@ async function collectYields<T>(gen: AsyncGenerator<T>): Promise<T[]> {
 
 /**
  * Extract the adapter from useWidgetChatRuntime result.
- * Because we mock useLocalRuntime to pass through the adapter.
+ * Slice 07 changed the API: useWidgetChatRuntime now returns { runtime, controls }.
+ * The adapter is stored in runtime (which is mocked to return { adapter, _runtime: true }).
  */
 function getAdapter(apiUrl: string) {
-  const result = useWidgetChatRuntime(apiUrl) as unknown as {
+  const { runtime } = useWidgetChatRuntime(apiUrl)
+  const runtimeWithAdapter = runtime as unknown as {
     adapter: {
       run: (params: { abortSignal: AbortSignal }) => AsyncGenerator<unknown>
     }
   }
-  return result.adapter
+  return runtimeWithAdapter.adapter
 }
 
 // ---------------------------------------------------------------------------
@@ -155,7 +157,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act (WHEN)
-      await collectYields(adapter.run({ abortSignal: controller.signal }))
+      await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert (THEN)
       expect(mockGetOrCreateAnonymousId).toHaveBeenCalled()
@@ -175,13 +177,22 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
 
       // Capture the sessionIdRef to verify it was set
       const sessionRef = { current: null as string | null }
-      mockUseRef.mockReturnValue(sessionRef)
+      const abortControllerRef = { current: null }
+
+      // Mock useRef to return our test refs in order: sessionIdRef first, abortControllerRef second
+      let useRefCallCount = 0
+      mockUseRef.mockImplementation((initialValue: unknown) => {
+        useRefCallCount++
+        if (useRefCallCount === 1) return sessionRef
+        if (useRefCallCount === 2) return abortControllerRef
+        return { current: initialValue }
+      })
 
       const adapter = getAdapter('http://localhost:8000')
       const controller = new AbortController()
 
       // Act (WHEN)
-      await collectYields(adapter.run({ abortSignal: controller.signal }))
+      await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert (THEN): session_id stored in ref
       expect(sessionRef.current).toBe('stored-session-123')
@@ -202,7 +213,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act (WHEN)
-      const yields = await collectYields(adapter.run({ abortSignal: controller.signal }))
+      const yields = await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert (THEN): progressive accumulated text
       expect(yields).toHaveLength(2) // Two text-delta events = two yields
@@ -224,7 +235,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act (WHEN)
-      const gen = adapter.run({ abortSignal: controller.signal })
+      const gen = adapter.run({ messages: [], abortSignal: controller.signal })
       const yields: unknown[] = []
       let result = await gen.next()
       while (!result.done) {
@@ -252,7 +263,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
 
       // Act & Assert (WHEN/THEN)
       await expect(
-        collectYields(adapter.run({ abortSignal: controller.signal }))
+        collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
       ).rejects.toThrow('LLM failed')
     })
 
@@ -271,7 +282,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const adapter = getAdapter('http://localhost:8000')
 
       // Act (WHEN)
-      await collectYields(adapter.run({ abortSignal: controller.signal }))
+      await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert (THEN): abortSignal was forwarded to startInterview
       expect(mockStartInterview).toHaveBeenCalledWith('mock-anon-id-1234', {
@@ -347,7 +358,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act
-      const yields = await collectYields(adapter.run({ abortSignal: controller.signal }))
+      const yields = await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert: verify exact @assistant-ui format
       expect(yields).toHaveLength(1)
@@ -374,7 +385,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act
-      const yields = await collectYields(adapter.run({ abortSignal: controller.signal }))
+      const yields = await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert: each yield has accumulated text
       expect(yields).toHaveLength(3)
@@ -396,7 +407,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
       const controller = new AbortController()
 
       // Act
-      const yields = await collectYields(adapter.run({ abortSignal: controller.signal }))
+      const yields = await collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
 
       // Assert: no yields since no text-delta events
       expect(yields).toHaveLength(0)
@@ -416,7 +427,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
 
       // Act & Assert
       await expect(
-        collectYields(adapter.run({ abortSignal: controller.signal }))
+        collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
       ).rejects.toThrow('Service unavailable')
     })
 
@@ -429,7 +440,7 @@ describe('ChatModelAdapter - Start Flow (Slice 05)', () => {
 
       // Act & Assert
       await expect(
-        collectYields(adapter.run({ abortSignal: controller.signal }))
+        collectYields(adapter.run({ messages: [], abortSignal: controller.signal }))
       ).rejects.toThrow('Network error')
     })
   })
