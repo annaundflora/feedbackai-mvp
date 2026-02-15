@@ -5,6 +5,7 @@ export interface ApiClient {
   startInterview(anonymousId: string, options?: { signal?: AbortSignal }): Promise<Response>
   sendMessage(sessionId: string, message: string, options?: { signal?: AbortSignal }): Promise<Response>
   endInterview(sessionId: string, options?: { signal?: AbortSignal }): Promise<EndResponse>
+  endInterviewSafe(sessionId: string, options?: { signal?: AbortSignal }): Promise<EndResponse | null>
 }
 
 export function createApiClient(apiUrl: string | null): ApiClient {
@@ -40,6 +41,15 @@ export function createApiClient(apiUrl: string | null): ApiClient {
         throw new ApiError(error.error || 'Request failed', response.status, error.detail)
       }
       return response.json() as Promise<EndResponse>
+    },
+
+    async endInterviewSafe(sessionId, options) {
+      try {
+        return await this.endInterview(sessionId, options)
+      } catch (error) {
+        console.warn('Failed to end interview:', error)
+        return null
+      }
     },
   }
 }
