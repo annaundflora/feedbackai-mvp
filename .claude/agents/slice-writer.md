@@ -316,6 +316,12 @@ Prüfe deinen Slice gegen diese Checkliste:
 - [ ] **Für jede "Provides To" Zeile:** Wenn der Consumer eine bestehende Page ist (z.B. "Job Results Page"), dann MUSS entweder (a) die Consumer-Page als Deliverable in DIESEM Slice stehen (Modification), ODER (b) eine explizite Dependency auf einen Slice deklariert sein, der diese Integration übernimmt
 - [ ] **Mount-Point-Check:** Jede neue Component, die in einer bestehenden Page gemountet werden soll, braucht die Page-Modification als Deliverable - sonst ist die Component "tot" (existiert aber wird nie aufgerufen)
 
+### Build Config Consistency (bei Slices mit Build-Config-Deliverables)
+- [ ] Alle in `package.json` installierten Build-Plugins (devDependencies) sind in der Build-Config importiert und referenziert
+- [ ] Code Examples fuer Build-Configs enthalten ALLE notwendigen Imports und Plugin-Registrierungen
+- [ ] Bei IIFE/UMD Builds: `define: { 'process.env.NODE_ENV': JSON.stringify('production') }` in Vite/Webpack Config (Browser hat kein `process`)
+- [ ] Bei CSS-Frameworks mit Build-Plugins (Tailwind v4, PostCSS): Plugin in Build-Config registriert, nicht nur CSS-Import
+
 ### Testfälle-Qualität
 - [ ] Keine `expect(true).toBe(true)` Placeholder-Tests - verwende stattdessen `it.todo('Beschreibung')` für Tests die der Test-Writer implementieren soll
 - [ ] Test-Dateipfad im Metadata `Test`-Feld stimmt mit Dateipfad im `<test_spec>` Code-Block überein (`.test.ts` vs `.spec.ts`)

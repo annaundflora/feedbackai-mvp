@@ -154,7 +154,16 @@ Pruefe die Test-Strategy Section:
 - [ ] Code-Beispiele stimmen mit Architecture überein
 - [ ] Code-Beispiele nutzen korrekte Types/Schemas
 
-#### E) Test Coverage Check
+#### E) Build Config Sanity Check (bei Slices mit Build-Config-Deliverables)
+
+Wenn der Slice Build-Configs als Deliverable hat (vite.config, webpack.config, tsconfig, etc.):
+
+- [ ] Alle devDependencies die Build-Plugins sind (z.B. `@tailwindcss/vite`, `@vitejs/plugin-react`) sind in der Config importiert und in `plugins: []` registriert
+- [ ] Bei IIFE/UMD-Builds: `process.env.NODE_ENV` Replacement definiert (z.B. Vite `define: {}`)
+- [ ] Bei CSS-Frameworks mit Build-Plugin (Tailwind v4 → `@tailwindcss/vite`, PostCSS): Plugin in Build-Config vorhanden, nicht nur CSS-`@import`
+- [ ] Code Examples fuer Build-Configs sind vollstaendig ausfuehrbar (alle Imports, alle Plugins)
+
+#### F) Test Coverage Check
 
 - [ ] Acceptance Criteria sind definiert (GIVEN/WHEN/THEN)
 - [ ] Jedes AC hat mindestens einen zugeordneten Test
@@ -325,7 +334,22 @@ Erstelle `compliance-slice-{NN}.md`:
 
 ---
 
-## E) Test Coverage
+## E) Build Config Sanity Check
+
+> Nur ausfuellen wenn Slice Build-Config-Deliverables hat. Sonst "N/A" eintragen.
+
+| Pruef-Aspekt | devDependency | In Config? | Status |
+|--------------|---------------|------------|--------|
+| [plugin] | [package] | Yes/No | ✅/❌ |
+
+| Pruef-Aspekt | Requirement | Vorhanden? | Status |
+|--------------|-------------|------------|--------|
+| process.env Replacement | IIFE/UMD Build | Yes/No/N/A | ✅/❌/➖ |
+| CSS Build Plugin | CSS Framework | Yes/No/N/A | ✅/❌/➖ |
+
+---
+
+## F) Test Coverage
 
 | Acceptance Criteria | Test Defined | Test Type | Status |
 |--------------------|--------------|-----------|--------|
@@ -333,7 +357,7 @@ Erstelle `compliance-slice-{NN}.md`:
 
 ---
 
-## F) Discovery Compliance
+## G) Discovery Compliance
 
 | Discovery Section | Element | Relevant? | Covered? | Status |
 |-------------------|---------|-----------|----------|--------|
@@ -401,6 +425,8 @@ Begruendung: Gate 2 prueft Spec-Qualitaet. Wenn 2 Versuche nicht reichen, muss d
 - Schema-Typen stimmen nicht überein mit Architecture
 - UI-Element aus Wireframe fehlt
 - Code-Beispiel nicht implementierbar oder unvollständig
+- Build-Plugin installiert (devDependency) aber nicht in Build-Config registriert
+- IIFE/UMD Build ohne `process.env` Replacement
 - Kein Integration Contract für Dependencies
 - Security-Requirement ignoriert
 - Fehlende Tests für Acceptance Criteria

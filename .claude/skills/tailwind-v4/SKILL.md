@@ -18,6 +18,27 @@ Tailwind CSS v4 introduces a **CSS-first configuration** approach, moving away f
 
 ---
 
+## 0. Build Tool Integration (REQUIRED)
+
+Tailwind v4 **requires** a build tool plugin to process `@import "tailwindcss"` and generate utility classes. Without the plugin, no utility classes are generated and all Tailwind class names have no effect.
+
+| Build Tool | Package | Config Location |
+|------------|---------|-----------------|
+| Vite | `@tailwindcss/vite` | `vite.config.ts` → `plugins: [tailwindcss()]` |
+| PostCSS | `@tailwindcss/postcss` | `postcss.config.js` → `plugins: { '@tailwindcss/postcss': {} }` |
+| CLI | `@tailwindcss/cli` | `npx @tailwindcss/cli -i input.css -o output.css` |
+
+Vite example:
+```typescript
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [tailwindcss(), react()],
+})
+```
+
+---
+
 ## 1. CSS-First Configuration
 
 ### No More tailwind.config.js
