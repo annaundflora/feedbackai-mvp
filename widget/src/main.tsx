@@ -1,35 +1,80 @@
-import React, { useState } from 'react'
+import React, { useReducer } from 'react'
 import ReactDOM from 'react-dom/client'
-import { parseConfig, findWidgetScript } from './config'
+import { parseConfig, findWidgetScript, WidgetConfig } from './config'
 import { FloatingButton } from './components/FloatingButton'
 import { Panel } from './components/Panel'
+import { ConsentScreen } from './components/screens/ConsentScreen'
+import { ChatScreen } from './components/screens/ChatScreen'
+import { ThankYouScreen } from './components/screens/ThankYouScreen'
+import { widgetReducer, initialState, WidgetScreen } from './reducer'
 import './styles/widget.css'
 
-function Widget({ config }: { config: ReturnType<typeof parseConfig> }) {
-  const [panelOpen, setPanelOpen] = useState(false)
+// Screen Router Component
+function ScreenRouter({
+  screen,
+  config,
+  onAcceptConsent,
+  onAutoClose
+}: {
+  screen: WidgetScreen
+  config: WidgetConfig
+  onAcceptConsent: () => void
+  onAutoClose: () => void
+}) {
+  switch (screen) {
+    case 'consent':
+      return (
+        <ConsentScreen
+          headline={config.texts.consentHeadline}
+          body={config.texts.consentBody}
+          ctaLabel={config.texts.consentCta}
+          onAccept={onAcceptConsent}
+        />
+      )
+
+    case 'chat':
+      return <ChatScreen />
+
+    case 'thankyou':
+      return (
+        <ThankYouScreen
+          headline={config.texts.thankYouHeadline}
+          body={config.texts.thankYouBody}
+          onAutoClose={onAutoClose}
+        />
+      )
+
+    default:
+      return null
+  }
+}
+
+// Main Widget Component
+function Widget({ config }: { config: WidgetConfig }) {
+  const [state, dispatch] = useReducer(widgetReducer, initialState)
+
+  const handleOpenPanel = () => dispatch({ type: 'OPEN_PANEL' })
+  const handleClosePanel = () => dispatch({ type: 'CLOSE_PANEL' })
+  const handleAcceptConsent = () => dispatch({ type: 'GO_TO_CHAT' })
+  const handleAutoClose = () => dispatch({ type: 'CLOSE_AND_RESET' })
 
   return (
     <div className="feedbackai-widget">
       <FloatingButton
-        onClick={() => setPanelOpen(true)}
-        visible={!panelOpen}
+        onClick={handleOpenPanel}
+        visible={!state.panelOpen}
       />
       <Panel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
+        open={state.panelOpen}
+        onClose={handleClosePanel}
         title={config.texts.panelTitle}
       >
-        {/* Placeholder Content - Slice 3 wird Screens hier einsetzen */}
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Panel Content
-            </h3>
-            <p className="text-sm text-gray-600">
-              Screens kommen in Slice 3
-            </p>
-          </div>
-        </div>
+        <ScreenRouter
+          screen={state.screen}
+          config={config}
+          onAcceptConsent={handleAcceptConsent}
+          onAutoClose={handleAutoClose}
+        />
       </Panel>
     </div>
   )

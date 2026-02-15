@@ -3,7 +3,7 @@
   "feature_name": "widget-shell",
   "status": "in_progress",
   "current_state": "implementing",
-  "current_slice_id": "slice-02-floating-button-panel-shell",
+  "current_slice_id": "slice-03-screens-state-machine",
   "retry_count": 0,
   "failed_stage": null,
   "waves": [
@@ -24,6 +24,6 @@
       "slices": ["slice-04-assistant-ui-chat"]
     }
   ],
-  "completed_slices": ["slice-01-vite-build-setup"],
-  "evidence_files": [".claude/evidence/widget-shell/slice-01-vite-build-setup.json"]
+  "completed_slices": ["slice-01-vite-build-setup", "slice-02-floating-button-panel-shell"],
+  "evidence_files": [".claude/evidence/widget-shell/slice-01-vite-build-setup.json", ".claude/evidence/widget-shell/slice-02-floating-button-panel-shell.json"]
 }

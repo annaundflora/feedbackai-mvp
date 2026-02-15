@@ -83,6 +83,31 @@
   to { opacity: 0; }
 }
 
+/* Screen Fade-In Animation */
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Screen Container Animation */
+.feedbackai-widget .screen-container {
+  animation: screen-fade-in 200ms ease-out;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .feedbackai-widget * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Scope all Tailwind utilities to widget container */
 @layer utilities {
   .feedbackai-widget .btn {

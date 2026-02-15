@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FeedbackAI Widget Test - Slice 2</title>
+  <title>FeedbackAI Widget Test - Slice 3</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,60 +31,97 @@
       color: #2196F3;
       font-weight: bold;
     }
+    .note {
+      background: #FFF9C4;
+      padding: 1rem;
+      border-left: 3px solid #FFC107;
+      margin: 1rem 0;
+    }
   </style>
 </head>
 <body>
-  <h1>FeedbackAI Widget Test - Slice 2</h1>
+  <h1>FeedbackAI Widget Test - Slice 3: Screens + State Machine</h1>
 
   <div class="test-section">
     <h2>Test Checklist</h2>
 
     <div class="test-step">
-      <strong>1. Floating Button Sichtbar</strong>
-      <p class="expected">✓ Runder Button am bottom-right (16px Abstand)</p>
-      <p class="expected">✓ Chat-Bubble Icon sichtbar</p>
-      <p class="expected">✓ Hover: Leichte Scale-Animation</p>
+      <strong>1. Initial State: Consent Screen</strong>
+      <p class="expected">✓ Button klicken → Panel öffnet</p>
+      <p class="expected">✓ Consent Screen sichtbar</p>
+      <p class="expected">✓ Headline: "Ihr Feedback zählt!"</p>
+      <p class="expected">✓ Body-Text sichtbar</p>
+      <p class="expected">✓ CTA-Button: "Los geht's"</p>
     </div>
 
     <div class="test-step">
-      <strong>2. Button Klick → Panel Öffnen</strong>
-      <p class="expected">✓ Panel gleitet hoch (Slide-Up 300ms)</p>
-      <p class="expected">✓ Floating Button verschwindet</p>
-      <p class="expected">✓ Panel-Header sichtbar mit Titel + X-Button</p>
+      <strong>2. Transition: Consent → Chat</strong>
+      <p class="expected">✓ "Los geht's" klicken</p>
+      <p class="expected">✓ Chat Screen wird angezeigt</p>
+      <p class="expected">✓ Placeholder: "Chat bereit" + Icon</p>
+      <p class="expected">✓ Composer Placeholder am unteren Rand</p>
     </div>
 
     <div class="test-step">
-      <strong>3. Panel Offen (Desktop)</strong>
-      <p class="expected">✓ Panel ~400x600px, bottom-right</p>
-      <p class="expected">✓ Abgerundete Ecken, Shadow</p>
-      <p class="expected">✓ Placeholder Content: "Panel Content"</p>
+      <strong>3. State-Persistenz: Panel Close/Reopen</strong>
+      <p class="expected">✓ Chat Screen sichtbar → X-Button klicken</p>
+      <p class="expected">✓ Panel schließt sich</p>
+      <p class="expected">✓ Button erneut klicken → Panel öffnet</p>
+      <p class="expected">✓ Chat Screen ist IMMER NOCH sichtbar (nicht Consent)</p>
     </div>
 
     <div class="test-step">
-      <strong>4. X-Button Klick → Panel Schließen</strong>
-      <p class="expected">✓ Panel gleitet runter (Slide-Down 300ms)</p>
-      <p class="expected">✓ Floating Button erscheint wieder</p>
+      <strong>4. ThankYou Screen (Manuell triggern)</strong>
+      <div class="note">
+        <strong>Manual Trigger:</strong> Browser Console öffnen, dann:
+        <pre>
+// Dispatch GO_TO_THANKYOU Action via DevTools
+// (Widget muss in window.widgetState gespeichert sein für Test)
+// Alternativ: Modify code to add dev button
+        </pre>
+      </div>
+      <p class="expected">✓ ThankYou Screen wird angezeigt</p>
+      <p class="expected">✓ Headline: "Vielen Dank!"</p>
+      <p class="expected">✓ Success Icon (Checkmark) sichtbar</p>
+      <p class="expected">✓ Auto-close Hint: "Schließt automatisch..."</p>
+      <p class="expected">✓ Nach 5 Sekunden: Panel schließt automatisch</p>
+      <p class="expected">✓ Panel erneut öffnen → Consent Screen (Reset)</p>
     </div>
 
     <div class="test-step">
-      <strong>5. Mobile Test (<=768px)</strong>
-      <p class="expected">✓ Panel ist Fullscreen (100vw x 100vh)</p>
-      <p class="expected">✓ Keine Ecken-Rundung auf Mobile</p>
+      <strong>5. ThankYou X-Button (vorzeitiges Schließen)</strong>
+      <p class="expected">✓ ThankYou Screen → X-Button klicken (vor Auto-Close)</p>
+      <p class="expected">✓ Panel schließt sofort</p>
+      <p class="expected">✓ Panel erneut öffnen → Consent Screen (Reset)</p>
     </div>
 
     <div class="test-step">
       <strong>6. Keyboard Navigation</strong>
-      <p class="expected">✓ Tab → Floating Button: Focus Ring sichtbar</p>
-      <p class="expected">✓ Enter/Space → Panel öffnet</p>
-      <p class="expected">✓ Tab → X-Button: Focus Ring sichtbar</p>
-      <p class="expected">✓ Enter/Space → Panel schließt</p>
+      <p class="expected">✓ Tab → Floating Button fokussiert</p>
+      <p class="expected">✓ Enter → Panel öffnet (Consent Screen)</p>
+      <p class="expected">✓ Tab → "Los geht's" fokussiert</p>
+      <p class="expected">✓ Enter → Chat Screen</p>
+      <p class="expected">✓ Tab → X-Button fokussiert</p>
+      <p class="expected">✓ Enter → Panel schließt</p>
     </div>
 
     <div class="test-step">
-      <strong>7. Touch Test (Mobile)</strong>
-      <p class="expected">✓ Button Tap → Panel öffnet</p>
-      <p class="expected">✓ Kein double-tap zoom (touch-action)</p>
-      <p class="expected">✓ X-Button Tap → Panel schließt</p>
+      <strong>7. Mobile Test (<=768px)</strong>
+      <p class="expected">✓ Consent/Chat/ThankYou Screens sind lesbar</p>
+      <p class="expected">✓ CTA-Button Touch-Target ≥44px</p>
+      <p class="expected">✓ Fullscreen Panel funktioniert</p>
+    </div>
+
+    <div class="test-step">
+      <strong>8. Reduced Motion Test</strong>
+      <div class="note">
+        <strong>How to Test:</strong>
+        - macOS: System Preferences → Accessibility → Display → Reduce motion
+        - Windows: Settings → Ease of Access → Display → Show animations
+        - DevTools: Rendering Tab → Emulate CSS prefers-reduced-motion
+      </div>
+      <p class="expected">✓ Screen-Transitions ohne Animationen</p>
+      <p class="expected">✓ Panel Slide-Up/Down minimal oder instant</p>
     </div>
   </div>
 
@@ -93,13 +130,34 @@
     <pre>
 FeedbackAI Widget mounted { lang: 'de', apiUrl: null, texts: {...} }
     </pre>
+    <p><strong>Keine Fehler oder Warnings</strong></p>
+  </div>
+
+  <div class="test-section">
+    <h2>Dev Helper: ThankYou Screen Trigger</h2>
+    <button id="trigger-thankyou" style="padding: 0.5rem 1rem; margin: 0.5rem 0; cursor: pointer;">
+      Trigger ThankYou Screen (Dev Test)
+    </button>
+    <p class="note">
+      Dieser Button ist nur für Testzwecke in test.html vorhanden.
+      In Produktion wird ThankYou nur via Backend-Event getriggert (Phase 3).
+    </p>
   </div>
 
   <!-- Widget Embed -->
   <script
     src="./dist/widget.js"
     data-lang="de"
-    data-api-url="http://localhost:8000"
   ></script>
+
+  <script>
+    // Dev Helper: Trigger ThankYou Screen
+    document.getElementById('trigger-thankyou').addEventListener('click', () => {
+      // This requires exposing dispatch to window for testing
+      // Alternatively, inject via browser DevTools
+      console.warn('ThankYou Trigger: Implement via DevTools or modify widget to expose dispatch for testing')
+      alert('Open Browser Console and dispatch: { type: "GO_TO_THANKYOU" }')
+    })
+  </script>
 </body>
 </html>
