@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FeedbackAI Widget Test - Slice 3</title>
+  <title>FeedbackAI Widget Test - Slice 4: Chat-UI</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,91 +37,119 @@
       border-left: 3px solid #FFC107;
       margin: 1rem 0;
     }
+    .success {
+      background: #E8F5E9;
+      border-left: 3px solid #4CAF50;
+    }
   </style>
 </head>
 <body>
-  <h1>FeedbackAI Widget Test - Slice 3: Screens + State Machine</h1>
+  <h1>FeedbackAI Widget Test - Slice 4: @assistant-ui Chat-UI</h1>
+
+  <div class="test-section success">
+    <h2>✅ Widget Complete - All Slices Done!</h2>
+    <p>Alle 4 Slices sind implementiert. Widget ist bereit für Phase 3 Backend-Anbindung.</p>
+  </div>
 
   <div class="test-section">
-    <h2>Test Checklist</h2>
+    <h2>Test Checklist - Chat-UI</h2>
 
     <div class="test-step">
-      <strong>1. Initial State: Consent Screen</strong>
-      <p class="expected">✓ Button klicken → Panel öffnet</p>
-      <p class="expected">✓ Consent Screen sichtbar</p>
-      <p class="expected">✓ Headline: "Ihr Feedback zählt!"</p>
-      <p class="expected">✓ Body-Text sichtbar</p>
-      <p class="expected">✓ CTA-Button: "Los geht's"</p>
+      <strong>1. Chat Screen: Empty State</strong>
+      <p class="expected">✓ "Los geht's" Button klicken → Chat Screen öffnet</p>
+      <p class="expected">✓ ThreadWelcome angezeigt: "Bereit für Ihr Feedback"</p>
+      <p class="expected">✓ Chat-Icon sichtbar</p>
+      <p class="expected">✓ Composer Input-Feld am unteren Rand</p>
+      <p class="expected">✓ Placeholder: "Nachricht eingeben..."</p>
     </div>
 
     <div class="test-step">
-      <strong>2. Transition: Consent → Chat</strong>
-      <p class="expected">✓ "Los geht's" klicken</p>
-      <p class="expected">✓ Chat Screen wird angezeigt</p>
-      <p class="expected">✓ Placeholder: "Chat bereit" + Icon</p>
-      <p class="expected">✓ Composer Placeholder am unteren Rand</p>
+      <strong>2. Composer: Typing</strong>
+      <p class="expected">✓ Input-Feld klicken → Cursor blinkt</p>
+      <p class="expected">✓ Text tippen → Send-Button wird enabled</p>
+      <p class="expected">✓ Send-Button zeigt Pfeil-Icon</p>
+      <p class="expected">✓ Input hat Focus-Ring (blauer Ring)</p>
     </div>
 
     <div class="test-step">
-      <strong>3. State-Persistenz: Panel Close/Reopen</strong>
-      <p class="expected">✓ Chat Screen sichtbar → X-Button klicken</p>
-      <p class="expected">✓ Panel schließt sich</p>
-      <p class="expected">✓ Button erneut klicken → Panel öffnet</p>
-      <p class="expected">✓ Chat Screen ist IMMER NOCH sichtbar (nicht Consent)</p>
+      <strong>3. Message senden: Enter</strong>
+      <p class="expected">✓ Text tippen + Enter drücken</p>
+      <p class="expected">✓ User-Message erscheint in Thread (rechts, blau)</p>
+      <p class="expected">✓ Slide-In Animation (200ms)</p>
+      <p class="expected">✓ Input-Feld wird geleert</p>
+      <p class="expected">✓ Send-Button wieder disabled</p>
     </div>
 
     <div class="test-step">
-      <strong>4. ThankYou Screen (Manuell triggern)</strong>
+      <strong>4. Message senden: Send-Button</strong>
+      <p class="expected">✓ Text tippen + Send-Button klicken</p>
+      <p class="expected">✓ User-Message erscheint in Thread</p>
+      <p class="expected">✓ Input-Feld wird geleert</p>
+    </div>
+
+    <div class="test-step">
+      <strong>5. Phase 2: Keine Assistant-Antwort</strong>
       <div class="note">
-        <strong>Manual Trigger:</strong> Browser Console öffnen, dann:
-        <pre>
-// Dispatch GO_TO_THANKYOU Action via DevTools
-// (Widget muss in window.widgetState gespeichert sein für Test)
-// Alternativ: Modify code to add dev button
-        </pre>
+        <strong>Expected Behavior:</strong> In Phase 2 gibt es kein Backend.
+        Dummy-Adapter gibt keine Antworten zurück.
       </div>
-      <p class="expected">✓ ThankYou Screen wird angezeigt</p>
-      <p class="expected">✓ Headline: "Vielen Dank!"</p>
-      <p class="expected">✓ Success Icon (Checkmark) sichtbar</p>
-      <p class="expected">✓ Auto-close Hint: "Schließt automatisch..."</p>
-      <p class="expected">✓ Nach 5 Sekunden: Panel schließt automatisch</p>
-      <p class="expected">✓ Panel erneut öffnen → Consent Screen (Reset)</p>
+      <p class="expected">✓ Nach User-Message: Keine Assistant-Antwort</p>
+      <p class="expected">✓ Kein Typing-Indicator</p>
+      <p class="expected">✓ User kann weitere Messages senden</p>
     </div>
 
     <div class="test-step">
-      <strong>5. ThankYou X-Button (vorzeitiges Schließen)</strong>
-      <p class="expected">✓ ThankYou Screen → X-Button klicken (vor Auto-Close)</p>
-      <p class="expected">✓ Panel schließt sofort</p>
-      <p class="expected">✓ Panel erneut öffnen → Consent Screen (Reset)</p>
+      <strong>6. Message Styling</strong>
+      <p class="expected">✓ User Messages: Rechts aligned, brand color (blau)</p>
+      <p class="expected">✓ Text lesbar, whitespace-pre-wrap</p>
+      <p class="expected">✓ Rounded corners (rounded-2xl)</p>
+      <p class="expected">✓ Max width 80% (lesbar)</p>
     </div>
 
     <div class="test-step">
-      <strong>6. Keyboard Navigation</strong>
-      <p class="expected">✓ Tab → Floating Button fokussiert</p>
-      <p class="expected">✓ Enter → Panel öffnet (Consent Screen)</p>
-      <p class="expected">✓ Tab → "Los geht's" fokussiert</p>
-      <p class="expected">✓ Enter → Chat Screen</p>
-      <p class="expected">✓ Tab → X-Button fokussiert</p>
-      <p class="expected">✓ Enter → Panel schließt</p>
+      <strong>7. Thread Scrollbar</strong>
+      <p class="expected">✓ Mehrere Messages senden (>5)</p>
+      <p class="expected">✓ Thread wird scrollbar</p>
+      <p class="expected">✓ Custom Scrollbar sichtbar (subtil, grau)</p>
+      <p class="expected">✓ Hover: Scrollbar wird dunkler</p>
     </div>
 
     <div class="test-step">
-      <strong>7. Mobile Test (<=768px)</strong>
-      <p class="expected">✓ Consent/Chat/ThankYou Screens sind lesbar</p>
-      <p class="expected">✓ CTA-Button Touch-Target ≥44px</p>
-      <p class="expected">✓ Fullscreen Panel funktioniert</p>
+      <strong>8. Keyboard Navigation</strong>
+      <p class="expected">✓ Tab → Composer Input fokussiert</p>
+      <p class="expected">✓ Focus-Ring sichtbar (ring-2)</p>
+      <p class="expected">✓ Enter → Message senden</p>
+      <p class="expected">✓ Shift+Enter → Neue Zeile (Textarea)</p>
+      <p class="expected">✓ Tab → Send-Button fokussiert</p>
+      <p class="expected">✓ Enter → Message senden</p>
     </div>
 
     <div class="test-step">
-      <strong>8. Reduced Motion Test</strong>
+      <strong>9. Mobile Test (<=768px)</strong>
+      <p class="expected">✓ Chat Screen Fullscreen</p>
+      <p class="expected">✓ Composer Input lesbar</p>
+      <p class="expected">✓ Send-Button Touch Target ≥44px</p>
+      <p class="expected">✓ Thread scrollbar funktioniert auf Touch</p>
+      <p class="expected">✓ Keine double-tap zoom (touch-action)</p>
+    </div>
+
+    <div class="test-step">
+      <strong>10. Reduced Motion Test</strong>
       <div class="note">
         <strong>How to Test:</strong>
-        - macOS: System Preferences → Accessibility → Display → Reduce motion
-        - Windows: Settings → Ease of Access → Display → Show animations
-        - DevTools: Rendering Tab → Emulate CSS prefers-reduced-motion
+        - DevTools → Rendering Tab → Emulate CSS prefers-reduced-motion
       </div>
-      <p class="expected">✓ Screen-Transitions ohne Animationen</p>
-      <p class="expected">✓ Panel Slide-Up/Down minimal oder instant</p>
+      <p class="expected">✓ Message Slide-In Animation disabled (instant)</p>
+      <p class="expected">✓ Keine sichtbare Animation bei Message-Erscheinen</p>
+    </div>
+
+    <div class="test-step">
+      <strong>11. Full Widget Flow</strong>
+      <p class="expected">✓ Floating Button → Panel öffnet (Consent)</p>
+      <p class="expected">✓ "Los geht's" → Chat Screen</p>
+      <p class="expected">✓ Message tippen + senden → User Message erscheint</p>
+      <p class="expected">✓ X-Button → Panel schließt (Chat-State bleibt)</p>
+      <p class="expected">✓ Button erneut → Panel öffnet (Chat-Screen mit Messages)</p>
     </div>
   </div>
 
@@ -130,35 +158,34 @@
     <pre>
 FeedbackAI Widget mounted { lang: 'de', apiUrl: null, texts: {...} }
     </pre>
-    <p><strong>Keine Fehler oder Warnings</strong></p>
+    <p><strong>Keine Fehler oder Warnings von @assistant-ui</strong></p>
   </div>
 
   <div class="test-section">
-    <h2>Dev Helper: ThankYou Screen Trigger</h2>
-    <button id="trigger-thankyou" style="padding: 0.5rem 1rem; margin: 0.5rem 0; cursor: pointer;">
-      Trigger ThankYou Screen (Dev Test)
-    </button>
-    <p class="note">
-      Dieser Button ist nur für Testzwecke in test.html vorhanden.
-      In Produktion wird ThankYou nur via Backend-Event getriggert (Phase 3).
-    </p>
+    <h2>Bundle Size Check</h2>
+    <div class="note">
+      Nach <code>npm run build</code>:
+      <ul>
+        <li>Target: &lt;200KB gzipped</li>
+        <li>Accept: &lt;500KB ungzipped</li>
+        <li>@assistant-ui/react + React 19 sind große Dependencies</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section success">
+    <h2>Phase 3 Readiness Check</h2>
+    <p>✅ LocalRuntime integriert (Dummy-Adapter)</p>
+    <p>✅ Thread + Composer funktionieren</p>
+    <p>✅ Message-Rendering styled</p>
+    <p>✅ User kann tippen und senden</p>
+    <p>→ <strong>Phase 3:</strong> Nur Adapter austauschen (SSE-Backend-Call)</p>
   </div>
 
   <!-- Widget Embed -->
   <script
     src="./dist/widget.js"
-    data-api-url="http://localhost:8000"
     data-lang="de"
   ></script>
-
-  <script>
-    // Dev Helper: Trigger ThankYou Screen
-    document.getElementById('trigger-thankyou').addEventListener('click', () => {
-      // This requires exposing dispatch to window for testing
-      // Alternatively, inject via browser DevTools
-      console.warn('ThankYou Trigger: Implement via DevTools or modify widget to expose dispatch for testing')
-      alert('Open Browser Console and dispatch: { type: "GO_TO_THANKYOU" }')
-    })
-  </script>
 </body>
 </html>

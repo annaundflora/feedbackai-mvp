@@ -32,6 +32,20 @@
 
   /* Mobile Breakpoint */
   --breakpoint-mobile: 768px;
+
+  /* Chat Colors */
+  --color-message-user-bg: var(--color-brand);
+  --color-message-user-text: oklch(1 0 0);
+  --color-message-assistant-bg: oklch(0.95 0 0);
+  --color-message-assistant-text: var(--color-text);
+
+  /* Chat Spacing */
+  --chat-padding: 1rem;
+  --message-gap: 1rem;
+
+  /* Composer */
+  --composer-input-bg: oklch(0.97 0 0);
+  --composer-input-focus-bg: var(--color-bg);
 }
 
 /* CSS Reset + Scoping */
@@ -98,6 +112,45 @@
 /* Screen Container Animation */
 .feedbackai-widget .screen-container {
   animation: screen-fade-in 200ms ease-out;
+}
+
+/* Chat Message Animations */
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feedbackai-widget .chat-message {
+  animation: message-slide-in 200ms ease-out;
+}
+
+/* Scrollbar Styling (für Thread) */
+.feedbackai-widget .chat-thread::-webkit-scrollbar {
+  width: 6px;
+}
+
+.feedbackai-widget .chat-thread::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.feedbackai-widget .chat-thread::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.feedbackai-widget .chat-thread::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Composer Focus Animation */
+.feedbackai-widget .composer-input:focus {
+  box-shadow: 0 0 0 2px var(--color-brand);
 }
 
 /* Reduced Motion Support */

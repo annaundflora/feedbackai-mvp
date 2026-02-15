@@ -33,7 +33,7 @@ function ScreenRouter({
       )
 
     case 'chat':
-      return <ChatScreen />
+      return <ChatScreen config={config} />
 
     case 'thankyou':
       return (
