@@ -3,28 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FeedbackAI Widget Test</title>
+  <title>FeedbackAI Widget Test - Slice 2</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 2rem;
       background: #f0f0f0;
+      min-height: 100vh;
     }
     h1 {
       color: #333;
     }
+    .test-section {
+      background: white;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-step {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #f9f9f9;
+      border-left: 3px solid #4CAF50;
+    }
+    .expected {
+      color: #2196F3;
+      font-weight: bold;
+    }
   </style>
-  <!-- Widget CSS (temporarily external - TODO: inline in widget.js) -->
-  <link rel="stylesheet" href="./dist/feedbackai-widget.css">
 </head>
 <body>
-  <h1>FeedbackAI Widget Test Page</h1>
-  <p>Das Widget sollte unten rechts erscheinen.</p>
+  <h1>FeedbackAI Widget Test - Slice 2</h1>
+
+  <div class="test-section">
+    <h2>Test Checklist</h2>
+
+    <div class="test-step">
+      <strong>1. Floating Button Sichtbar</strong>
+      <p class="expected">✓ Runder Button am bottom-right (16px Abstand)</p>
+      <p class="expected">✓ Chat-Bubble Icon sichtbar</p>
+      <p class="expected">✓ Hover: Leichte Scale-Animation</p>
+    </div>
+
+    <div class="test-step">
+      <strong>2. Button Klick → Panel Öffnen</strong>
+      <p class="expected">✓ Panel gleitet hoch (Slide-Up 300ms)</p>
+      <p class="expected">✓ Floating Button verschwindet</p>
+      <p class="expected">✓ Panel-Header sichtbar mit Titel + X-Button</p>
+    </div>
+
+    <div class="test-step">
+      <strong>3. Panel Offen (Desktop)</strong>
+      <p class="expected">✓ Panel ~400x600px, bottom-right</p>
+      <p class="expected">✓ Abgerundete Ecken, Shadow</p>
+      <p class="expected">✓ Placeholder Content: "Panel Content"</p>
+    </div>
+
+    <div class="test-step">
+      <strong>4. X-Button Klick → Panel Schließen</strong>
+      <p class="expected">✓ Panel gleitet runter (Slide-Down 300ms)</p>
+      <p class="expected">✓ Floating Button erscheint wieder</p>
+    </div>
+
+    <div class="test-step">
+      <strong>5. Mobile Test (<=768px)</strong>
+      <p class="expected">✓ Panel ist Fullscreen (100vw x 100vh)</p>
+      <p class="expected">✓ Keine Ecken-Rundung auf Mobile</p>
+    </div>
+
+    <div class="test-step">
+      <strong>6. Keyboard Navigation</strong>
+      <p class="expected">✓ Tab → Floating Button: Focus Ring sichtbar</p>
+      <p class="expected">✓ Enter/Space → Panel öffnet</p>
+      <p class="expected">✓ Tab → X-Button: Focus Ring sichtbar</p>
+      <p class="expected">✓ Enter/Space → Panel schließt</p>
+    </div>
+
+    <div class="test-step">
+      <strong>7. Touch Test (Mobile)</strong>
+      <p class="expected">✓ Button Tap → Panel öffnet</p>
+      <p class="expected">✓ Kein double-tap zoom (touch-action)</p>
+      <p class="expected">✓ X-Button Tap → Panel schließt</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Console Output Erwartung</h2>
+    <pre>
+FeedbackAI Widget mounted { lang: 'de', apiUrl: null, texts: {...} }
+    </pre>
+  </div>
 
   <!-- Widget Embed -->
   <script
     src="./dist/widget.js"
-    data-api-url="https://api.example.com"
     data-lang="de"
   ></script>
 </body>

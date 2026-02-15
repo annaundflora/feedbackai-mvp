@@ -1,17 +1,36 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { parseConfig, findWidgetScript } from './config'
+import { FloatingButton } from './components/FloatingButton'
+import { Panel } from './components/Panel'
 import './styles/widget.css'
 
-// Placeholder Widget Component (Slice 2 wird echte UI bauen)
 function Widget({ config }: { config: ReturnType<typeof parseConfig> }) {
+  const [panelOpen, setPanelOpen] = useState(false)
+
   return (
     <div className="feedbackai-widget">
-      <div className="p-4 bg-white rounded shadow">
-        <h2>FeedbackAI Widget</h2>
-        <p>Language: {config.lang}</p>
-        <p>API URL: {config.apiUrl || 'Not set'}</p>
-      </div>
+      <FloatingButton
+        onClick={() => setPanelOpen(true)}
+        visible={!panelOpen}
+      />
+      <Panel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={config.texts.panelTitle}
+      >
+        {/* Placeholder Content - Slice 3 wird Screens hier einsetzen */}
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Panel Content
+            </h3>
+            <p className="text-sm text-gray-600">
+              Screens kommen in Slice 3
+            </p>
+          </div>
+        </div>
+      </Panel>
     </div>
   )
 }
