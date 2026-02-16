@@ -5,13 +5,20 @@
  * in isolation, verifying Phase 2 behavior (no backend responses).
  */
 import { describe, it, expect, vi } from 'vitest'
+import { renderHook } from '@testing-library/react'
+
+// Track the adapter passed to useLocalRuntime
+let capturedAdapter: unknown = null
 
 // Mock @assistant-ui/react to isolate the runtime logic
 vi.mock('@assistant-ui/react', () => ({
-  useLocalRuntime: vi.fn((adapter: unknown) => ({
-    _adapter: adapter,
-    _type: 'mocked-local-runtime',
-  })),
+  useLocalRuntime: vi.fn((adapter: unknown) => {
+    capturedAdapter = adapter
+    return {
+      _adapter: adapter,
+      _type: 'mocked-local-runtime',
+    }
+  }),
 }))
 
 describe('unit: chat-runtime', () => {
@@ -19,25 +26,15 @@ describe('unit: chat-runtime', () => {
     const { useLocalRuntime } = await import('@assistant-ui/react')
     const { useWidgetChatRuntime } = await import('../../src/lib/chat-runtime')
 
-    // The module-level call to useLocalRuntime happens at import time
-    // but since it's a hook, it is called when useWidgetChatRuntime is invoked.
-    // We need to verify the adapter is passed through.
+    const { result } = renderHook(() => useWidgetChatRuntime(null))
 
-    // Call the hook (mocked, so no React context needed)
-    const result = useWidgetChatRuntime()
-
-    expect(useLocalRuntime).toHaveBeenCalledTimes(1)
-    expect(result).toBeDefined()
-    // The mocked useLocalRuntime returns our mock shape
-    expect((result as Record<string, unknown>)._type).toBe('mocked-local-runtime')
+    expect(useLocalRuntime).toHaveBeenCalled()
+    expect(result.current).toBeDefined()
+    expect((result.current.runtime as Record<string, unknown>)._type).toBe('mocked-local-runtime')
   })
 
   it('dummy adapter is an async generator that yields nothing', async () => {
-    const { useLocalRuntime } = await import('@assistant-ui/react')
-    const mockedUseLocalRuntime = vi.mocked(useLocalRuntime)
-
-    // Get the adapter that was passed to useLocalRuntime
-    const adapterArg = mockedUseLocalRuntime.mock.calls[0]?.[0] as {
+    const adapterArg = capturedAdapter as {
       run: (params: { messages: unknown[]; abortSignal: AbortSignal }) => AsyncGenerator
     }
     expect(adapterArg).toBeDefined()
@@ -61,10 +58,7 @@ describe('unit: chat-runtime', () => {
   })
 
   it('dummy adapter does not throw on abort signal', async () => {
-    const { useLocalRuntime } = await import('@assistant-ui/react')
-    const mockedUseLocalRuntime = vi.mocked(useLocalRuntime)
-
-    const adapterArg = mockedUseLocalRuntime.mock.calls[0]?.[0] as {
+    const adapterArg = capturedAdapter as {
       run: (params: { messages: unknown[]; abortSignal: AbortSignal }) => AsyncGenerator
     }
 

@@ -43,7 +43,7 @@ vi.mock('@assistant-ui/react', () => {
     })
 
   return {
-    MessagePrimitive: { Root, Content },
+    MessagePrimitive: { Root, Content, Parts: Content },
     ThreadPrimitive: {
       Root: ThreadRoot,
       Empty: ThreadEmpty,

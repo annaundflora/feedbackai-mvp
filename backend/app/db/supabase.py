@@ -44,9 +44,14 @@ def _build_client_options(settings: Settings):
     from supabase.lib.client_options import ClientOptions
 
     timeout = settings.db_timeout_seconds
-    return ClientOptions(
+    opts = ClientOptions(
         postgrest_client_timeout=timeout,
     )
+    # supabase v2.28 bug: Client expects attrs missing from ClientOptions
+    for attr in ("storage", "httpx_client"):
+        if not hasattr(opts, attr):
+            setattr(opts, attr, None)
+    return opts
 
 
 def reset_supabase_client() -> None:

@@ -185,6 +185,21 @@ Erstelle `compliance-architecture.md`:
 
 ## D) External Dependencies
 
+### D1) Dependency Version Check (BLOCKING!)
+
+Für JEDE Library in der Integrations-Tabelle der Architecture:
+
+| Dependency | Arch Version | Pinning File | Pinned? | "Latest"? | Status |
+|------------|-------------|--------------|---------|-----------|--------|
+| [lib] | [version aus arch] | [package.json / requirements.txt / etc.] | ✅ gepinnt / ❌ ungepinnt | ❌ wenn "Latest"/"current" | ✅/❌ |
+
+**BLOCKING wenn:**
+- Architecture schreibt "Latest", "current", oder keine Version
+- Dependency-File (package.json, requirements.txt, etc.) hat keine Version-Constraint
+- Architecture dokumentiert nur einen Stack (z.B. nur Frontend) aber Feature nutzt mehrere
+
+### D2) External APIs & Services
+
 | Dependency | Rate Limits | Auth | Errors | Timeout | Status |
 |------------|-------------|------|--------|---------|--------|
 | [API/Service] | [limits] | [method] | [handling] | [value] | ✅/⚠️/❌ |
@@ -242,6 +257,9 @@ Erstelle `compliance-architecture.md`:
 - External API nicht dokumentiert
 - Rate Limits nicht dokumentiert
 - Timeout-Werte fehlen
+- Dependency-Version ist "Latest", "current" oder fehlt
+- Dependency-File (package.json, requirements.txt) hat ungepinnte Version
+- Architecture dokumentiert nur einen Stack obwohl Feature mehrere nutzt
 
 ### AUTO-FIX (🔧) - Kann automatisch ergänzt werden
 

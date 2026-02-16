@@ -2,7 +2,8 @@
  * Test exports for E2E integration tests.
  * Exports Widget component and related utilities for testing.
  */
-import React, { useReducer } from 'react'
+import { useReducer, useContext, createContext } from 'react'
+import { AssistantRuntimeProvider } from '@assistant-ui/react'
 import type { WidgetConfig } from './config'
 import { FloatingButton } from './components/FloatingButton'
 import { Panel } from './components/Panel'
@@ -10,8 +11,29 @@ import { ConsentScreen } from './components/screens/ConsentScreen'
 import { ChatScreen } from './components/screens/ChatScreen'
 import { ThankYouScreen } from './components/screens/ThankYouScreen'
 import { widgetReducer, initialState, WidgetScreen } from './reducer'
-import { useWidgetChatRuntime } from './lib/chat-runtime'
+import { useWidgetChatRuntime, InterviewControls } from './lib/chat-runtime'
 import './styles/widget.css'
+
+// Context to pass controls from RuntimeProvider to WidgetContent
+const ControlsContext = createContext<InterviewControls | null>(null)
+
+function RuntimeProvider({
+  apiUrl,
+  children
+}: {
+  apiUrl: string | null
+  children: React.ReactNode
+}) {
+  const { runtime, controls } = useWidgetChatRuntime(apiUrl)
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <ControlsContext.Provider value={controls}>
+        {children}
+      </ControlsContext.Provider>
+    </AssistantRuntimeProvider>
+  )
+}
 
 // Screen Router Component
 function ScreenRouter({
@@ -21,7 +43,6 @@ function ScreenRouter({
   onAutoClose,
   onRestart,
   onRedirectToThankYou,
-  runtime,
   controls
 }: {
   screen: WidgetScreen
@@ -30,8 +51,7 @@ function ScreenRouter({
   onAutoClose: () => void
   onRestart: () => void
   onRedirectToThankYou: () => void
-  runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
-  controls: ReturnType<typeof useWidgetChatRuntime>['controls']
+  controls: InterviewControls
 }) {
   switch (screen) {
     case 'consent':
@@ -48,7 +68,6 @@ function ScreenRouter({
       return (
         <ChatScreen
           config={config}
-          runtime={runtime}
           controls={controls}
           onRestart={onRestart}
           onRedirectToThankYou={onRedirectToThankYou}
@@ -69,10 +88,9 @@ function ScreenRouter({
   }
 }
 
-// Main Widget Component (exported for tests)
-export function Widget({ config }: { config: WidgetConfig }) {
+function WidgetContent({ config }: { config: WidgetConfig }) {
   const [state, dispatch] = useReducer(widgetReducer, initialState)
-  const { runtime, controls } = useWidgetChatRuntime(config.apiUrl)
+  const controls = useContext(ControlsContext)!
 
   const handleOpenPanel = () => dispatch({ type: 'OPEN_PANEL' })
 
@@ -108,10 +126,18 @@ export function Widget({ config }: { config: WidgetConfig }) {
           onAutoClose={handleAutoClose}
           onRestart={handleRestart}
           onRedirectToThankYou={handleRedirectToThankYou}
-          runtime={runtime}
           controls={controls}
         />
       </Panel>
     </div>
+  )
+}
+
+// Main Widget Component (exported for tests)
+export function Widget({ config }: { config: WidgetConfig }) {
+  return (
+    <RuntimeProvider apiUrl={config.apiUrl}>
+      <WidgetContent config={config} />
+    </RuntimeProvider>
   )
 }

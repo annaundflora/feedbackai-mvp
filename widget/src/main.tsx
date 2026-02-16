@@ -1,5 +1,6 @@
-import React, { useReducer } from 'react'
+import React, { useReducer, useContext, createContext, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
+import { AssistantRuntimeProvider } from '@assistant-ui/react'
 import { parseConfig, findWidgetScript, WidgetConfig } from './config'
 import { FloatingButton } from './components/FloatingButton'
 import { Panel } from './components/Panel'
@@ -7,8 +8,36 @@ import { ConsentScreen } from './components/screens/ConsentScreen'
 import { ChatScreen } from './components/screens/ChatScreen'
 import { ThankYouScreen } from './components/screens/ThankYouScreen'
 import { widgetReducer, initialState, WidgetScreen } from './reducer'
-import { useWidgetChatRuntime } from './lib/chat-runtime'
+import { useWidgetChatRuntime, InterviewControls } from './lib/chat-runtime'
 import './styles/widget.css'
+
+// Context to pass controls from RuntimeProvider to WidgetContent
+const ControlsContext = createContext<InterviewControls | null>(null)
+
+/**
+ * RuntimeProvider isolates useLocalRuntime from state-driven re-renders.
+ *
+ * The infinite re-render bug (React Error #185) was fixed in @assistant-ui/react
+ * v0.8.4. This separation remains as a best practice — keeping the runtime
+ * provider above state-driven components prevents unnecessary hook re-fires.
+ */
+function RuntimeProvider({
+  apiUrl,
+  children
+}: {
+  apiUrl: string | null
+  children: React.ReactNode
+}) {
+  const { runtime, controls } = useWidgetChatRuntime(apiUrl)
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <ControlsContext.Provider value={controls}>
+        {children}
+      </ControlsContext.Provider>
+    </AssistantRuntimeProvider>
+  )
+}
 
 // Screen Router Component
 function ScreenRouter({
@@ -18,7 +47,6 @@ function ScreenRouter({
   onAutoClose,
   onRestart,
   onRedirectToThankYou,
-  runtime,
   controls
 }: {
   screen: WidgetScreen
@@ -27,8 +55,7 @@ function ScreenRouter({
   onAutoClose: () => void
   onRestart: () => void
   onRedirectToThankYou: () => void
-  runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
-  controls: ReturnType<typeof useWidgetChatRuntime>['controls']
+  controls: InterviewControls
 }) {
   switch (screen) {
     case 'consent':
@@ -45,7 +72,6 @@ function ScreenRouter({
       return (
         <ChatScreen
           config={config}
-          runtime={runtime}
           controls={controls}
           onRestart={onRestart}
           onRedirectToThankYou={onRedirectToThankYou}
@@ -66,10 +92,13 @@ function ScreenRouter({
   }
 }
 
-// Main Widget Component
-function Widget({ config }: { config: WidgetConfig }) {
+/**
+ * WidgetContent holds all state (useReducer) and UI.
+ * Re-renders from dispatch do NOT propagate to RuntimeProvider above.
+ */
+function WidgetContent({ config }: { config: WidgetConfig }) {
   const [state, dispatch] = useReducer(widgetReducer, initialState)
-  const { runtime, controls } = useWidgetChatRuntime(config.apiUrl)
+  const controls = useContext(ControlsContext)!
 
   const handleOpenPanel = () => dispatch({ type: 'OPEN_PANEL' })
 
@@ -105,11 +134,19 @@ function Widget({ config }: { config: WidgetConfig }) {
           onAutoClose={handleAutoClose}
           onRestart={handleRestart}
           onRedirectToThankYou={handleRedirectToThankYou}
-          runtime={runtime}
           controls={controls}
         />
       </Panel>
     </div>
+  )
+}
+
+// Main Widget Component
+function Widget({ config }: { config: WidgetConfig }) {
+  return (
+    <RuntimeProvider apiUrl={config.apiUrl}>
+      <WidgetContent config={config} />
+    </RuntimeProvider>
   )
 }
 
@@ -140,7 +177,34 @@ function Widget({ config }: { config: WidgetConfig }) {
   const root = ReactDOM.createRoot(container)
   root.render(
     <React.StrictMode>
-      <Widget config={config} />
+      <Suspense fallback={
+        <div className="feedbackai-widget">
+          <div style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            backgroundColor: '#3b82f6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0.6
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '3px solid white',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          </div>
+        </div>
+      }>
+        <Widget config={config} />
+      </Suspense>
     </React.StrictMode>
   )
 

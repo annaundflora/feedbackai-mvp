@@ -2,8 +2,8 @@
   "spec_path": "specs/phase-3/2026-02-15-backend-widget-integration",
   "feature_name": "backend-widget-integration",
   "status": "in_progress",
-  "current_state": "slice_complete",
-  "current_slice_id": "10-assistant-message-rendering",
+  "current_state": "feature_complete",
+  "current_slice_id": "11-e2e-integration-tests",
   "retry_count": 0,
   "failed_stage": null,
   "implementation_sequence": [
@@ -19,8 +19,8 @@
     "10-assistant-message-rendering",
     "11-e2e-integration-tests"
   ],
-  "completed_slices": ["01-anonymous-id-api-client", "02-sse-client-start", "05-adapter-start-flow", "03-sse-client-message", "06-adapter-message-flow", "04-interview-end", "07-interview-end-logic", "08-error-handling", "09-loading-typing-indicators", "10-assistant-message-rendering"],
-  "evidence_files": [".claude/evidence/backend-widget-integration/slice-01.json", ".claude/evidence/backend-widget-integration/slice-02.json", ".claude/evidence/backend-widget-integration/slice-05.json", ".claude/evidence/backend-widget-integration/slice-03.json", ".claude/evidence/backend-widget-integration/slice-06.json", ".claude/evidence/backend-widget-integration/slice-04.json", ".claude/evidence/backend-widget-integration/slice-07.json", ".claude/evidence/backend-widget-integration/slice-08.json", ".claude/evidence/backend-widget-integration/slice-09.json", ".claude/evidence/backend-widget-integration/slice-10.json"],
+  "completed_slices": ["01-anonymous-id-api-client", "02-sse-client-start", "05-adapter-start-flow", "03-sse-client-message", "06-adapter-message-flow", "04-interview-end", "07-interview-end-logic", "08-error-handling", "09-loading-typing-indicators", "10-assistant-message-rendering", "11-e2e-integration-tests"],
+  "evidence_files": [".claude/evidence/backend-widget-integration/slice-01.json", ".claude/evidence/backend-widget-integration/slice-02.json", ".claude/evidence/backend-widget-integration/slice-05.json", ".claude/evidence/backend-widget-integration/slice-03.json", ".claude/evidence/backend-widget-integration/slice-06.json", ".claude/evidence/backend-widget-integration/slice-04.json", ".claude/evidence/backend-widget-integration/slice-07.json", ".claude/evidence/backend-widget-integration/slice-08.json", ".claude/evidence/backend-widget-integration/slice-09.json", ".claude/evidence/backend-widget-integration/slice-10.json", ".claude/evidence/backend-widget-integration/slice-11.json"],
   "started_at": "2026-02-15T12:00:00Z",
   "last_updated": "2026-02-15T12:00:00Z"
 }

@@ -16,9 +16,6 @@ import React from 'react'
 // The real primitives require a full browser runtime with internal context providers.
 // These mocks replicate the structural behavior needed to verify ACs.
 vi.mock('@assistant-ui/react', () => ({
-  AssistantRuntimeProvider: ({ children }: { children: React.ReactNode; runtime: unknown }) => (
-    <div data-testid="runtime-provider">{children}</div>
-  ),
   ThreadPrimitive: {
     Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
       <div data-testid="thread-root" className={className} role="log" aria-live="polite">
@@ -65,10 +62,22 @@ vi.mock('@assistant-ui/react', () => ({
     ),
   },
   useLocalRuntime: vi.fn(() => ({ _type: 'mocked-runtime' })),
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
+  useThreadRuntime: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({ messages: [] })),
+    cancelRun: vi.fn(),
+    startRun: vi.fn(),
+  })),
 }))
 
 import { ChatScreen } from '../../src/components/screens/ChatScreen'
 import type { WidgetConfig } from '../../src/config'
+
+const mockControls = {
+  endInterview: vi.fn(),
+  hasActiveSession: vi.fn(() => false),
+}
 
 const TEST_CONFIG: WidgetConfig = {
   apiUrl: null,
@@ -96,7 +105,7 @@ describe('Slice-04 @assistant-ui Chat-UI: Acceptance', () => {
      *       THEN ThreadWelcome angezeigt ("Bereit fuer Ihr Feedback")
      */
     // Arrange (GIVEN): Render ChatScreen with runtime
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     // Act (WHEN): Thread is empty in Phase 2 (no messages yet)
     // The ThreadPrimitive.Empty component renders the welcome state
@@ -126,7 +135,7 @@ describe('Slice-04 @assistant-ui Chat-UI: Acceptance', () => {
      * - Send button exists with proper disabled styling classes
      * - The disabled:opacity-50 class indicates the button responds to disabled state
      */
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     // GIVEN: Composer is visible
     const input = screen.getByTestId('composer-input')
@@ -154,7 +163,7 @@ describe('Slice-04 @assistant-ui Chat-UI: Acceptance', () => {
      * - Composer wraps in a form (Enter submits)
      * - Thread messages container exists to receive new messages
      */
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     // GIVEN: Composer is visible with input
     const input = screen.getByTestId('composer-input')
@@ -183,7 +192,7 @@ describe('Slice-04 @assistant-ui Chat-UI: Acceptance', () => {
      * - Send button has aria-label for accessibility
      * - Thread messages container exists to receive messages
      */
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     // GIVEN: Composer is visible
     const sendButton = screen.getByTestId('composer-send')
@@ -223,7 +232,7 @@ describe('Slice-04 @assistant-ui Chat-UI: Acceptance', () => {
       // If adapter not captured via mock (module already imported), test structurally
       // The chat-runtime module exports useWidgetChatRuntime which calls useLocalRuntime
       // with dummyChatModelAdapter that yields nothing
-      render(<ChatScreen config={TEST_CONFIG} />)
+      render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
       // In Phase 2, no assistant messages should appear
       // The thread-empty state should still be visible (no assistant response)
       expect(screen.getByTestId('thread-empty')).toBeInTheDocument()

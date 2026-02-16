@@ -1,6 +1,6 @@
-import { AssistantRuntimeProvider, useThreadRuntime } from '@assistant-ui/react'
-import { useState, useEffect } from 'react'
-import type { useWidgetChatRuntime } from '../../lib/chat-runtime'
+import { useThreadRuntime } from '@assistant-ui/react'
+import { useState, useEffect, Suspense } from 'react'
+import type { InterviewControls } from '../../lib/chat-runtime'
 import { ChatThread } from '../chat/ChatThread'
 import { ChatComposer } from '../chat/ChatComposer'
 import { ErrorDisplay } from '../chat/ErrorDisplay'
@@ -9,13 +9,12 @@ import type { WidgetConfig } from '../../config'
 
 interface ChatScreenProps {
   config: WidgetConfig
-  runtime: ReturnType<typeof useWidgetChatRuntime>['runtime']
-  controls: ReturnType<typeof useWidgetChatRuntime>['controls']
+  controls: InterviewControls
   onRestart: () => void
   onRedirectToThankYou: () => void
 }
 
-function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: Omit<ChatScreenProps, 'runtime'>) {
+function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: ChatScreenProps) {
   const threadRuntime = useThreadRuntime()
   const [error, setError] = useState<{ message: string; action: 'retry' | 'restart' | 'redirect_thankyou' | 'none'; rawError: unknown } | null>(null)
 
@@ -97,15 +96,23 @@ function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: 
   )
 }
 
-export function ChatScreen({ config, runtime, controls, onRestart, onRedirectToThankYou }: ChatScreenProps) {
+export function ChatScreen({ config, controls, onRestart, onRedirectToThankYou }: ChatScreenProps) {
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="animate-[feedbackai-pulse_1.5s_ease-in-out_infinite] text-gray-500">
+            Lädt...
+          </div>
+        </div>
+      </div>
+    }>
       <ChatScreenInner
         config={config}
         controls={controls}
         onRestart={onRestart}
         onRedirectToThankYou={onRedirectToThankYou}
       />
-    </AssistantRuntimeProvider>
+    </Suspense>
   )
 }

@@ -1,25 +1,16 @@
 /**
  * Unit Tests for ChatScreen component.
  *
- * Tests the screen composition: AssistantRuntimeProvider wrapping
- * ChatThread and ChatComposer, with config prop passed through.
+ * Tests the screen composition: ChatThread and ChatComposer,
+ * with config prop passed through. AssistantRuntimeProvider is now
+ * at the Widget level (main.tsx), not inside ChatScreen.
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
-// Mock the chat runtime hook
-vi.mock('../../src/lib/chat-runtime', () => ({
-  useWidgetChatRuntime: vi.fn(() => ({ _type: 'mocked-runtime' })),
-}))
-
 // Mock @assistant-ui/react
 vi.mock('@assistant-ui/react', () => ({
-  AssistantRuntimeProvider: ({ children, runtime }: { children: React.ReactNode; runtime: unknown }) => (
-    <div data-testid="runtime-provider" data-runtime={JSON.stringify(runtime)}>
-      {children}
-    </div>
-  ),
   ThreadPrimitive: {
     Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
       <div data-testid="thread-root" className={className}>{children}</div>
@@ -46,6 +37,13 @@ vi.mock('@assistant-ui/react', () => ({
       <button aria-label={rest['aria-label']}>{children}</button>
     ),
   },
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
+  useThreadRuntime: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({ messages: [] })),
+    cancelRun: vi.fn(),
+    startRun: vi.fn(),
+  })),
 }))
 
 import { ChatScreen } from '../../src/components/screens/ChatScreen'
@@ -65,32 +63,21 @@ const TEST_CONFIG: WidgetConfig = {
   },
 }
 
+const mockControls = {
+  endInterview: vi.fn(),
+  hasActiveSession: vi.fn(() => false),
+}
+
 describe('unit: ChatScreen', () => {
-  it('wraps content in AssistantRuntimeProvider', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
-
-    const provider = screen.getByTestId('runtime-provider')
-    expect(provider).toBeInTheDocument()
-  })
-
-  it('passes runtime from useWidgetChatRuntime to provider', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
-
-    const provider = screen.getByTestId('runtime-provider')
-    const runtimeData = JSON.parse(provider.getAttribute('data-runtime') || '{}')
-    expect(runtimeData._type).toBe('mocked-runtime')
-  })
-
   it('renders ChatThread inside thread area', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
-    // ChatThread renders thread-root
     const threadRoot = screen.getByTestId('thread-root')
     expect(threadRoot).toBeInTheDocument()
   })
 
   it('renders ChatComposer with placeholder from config', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     const input = screen.getByTestId('composer-input')
     expect(input).toHaveAttribute('placeholder', 'Nachricht eingeben...')
@@ -103,24 +90,21 @@ describe('unit: ChatScreen', () => {
       texts: { ...TEST_CONFIG.texts, composerPlaceholder: 'Type a message...' },
     }
 
-    render(<ChatScreen config={enConfig} />)
+    render(<ChatScreen config={enConfig} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     const input = screen.getByTestId('composer-input')
     expect(input).toHaveAttribute('placeholder', 'Type a message...')
   })
 
   it('has flex layout with thread area (flex-1) and composer area (border-t)', () => {
-    const { container } = render(<ChatScreen config={TEST_CONFIG} />)
+    const { container } = render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
-    // The outer layout div
     const layoutDiv = container.querySelector('.flex.flex-col.h-full')
     expect(layoutDiv).not.toBeNull()
 
-    // Thread area: flex-1 overflow-y-auto
     const threadArea = container.querySelector('.flex-1.overflow-y-auto')
     expect(threadArea).not.toBeNull()
 
-    // Composer area: border-t
     const composerArea = container.querySelector('.border-t')
     expect(composerArea).not.toBeNull()
   })

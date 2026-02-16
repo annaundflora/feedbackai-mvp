@@ -37,6 +37,48 @@ Du orchestrierst die Implementierung eines Features slice-by-slice mit Sub-Agent
 
 ---
 
+## Phase 1b: Dependency Pre-Flight Check
+
+```
+# Stack-agnostische Dependency-Validierung
+# Erkennt automatisch welche Package-Manager im Projekt existieren
+
+dependency_files = {
+  "package.json":        "npm install / pnpm install",
+  "requirements.txt":    "pip install -r requirements.txt",
+  "pyproject.toml":      "pip install -e . / poetry install",
+  "go.mod":              "go mod download",
+  "Cargo.toml":          "cargo check",
+  "Gemfile":             "bundle install",
+}
+
+FOR each (file, install_cmd) IN dependency_files:
+  locations = Glob("**/{file}", exclude=["node_modules", ".venv", "vendor"])
+  FOR each location IN locations:
+    dir = dirname(location)
+
+    # Step 1: Install dependencies (catches version conflicts)
+    result = Bash("{install_cmd}", cwd=dir)
+    IF result.exit_code != 0:
+      HARD STOP: "Dependency install failed in {dir}. Fix before implementation."
+
+    # Step 2: Smoke-test imports (catches runtime incompatibilities)
+    # Extrahiere kritische Dependencies aus Architecture Integrations-Tabelle
+    # und pruefe ob sie importierbar sind
+    IF file == "package.json":
+      Bash("npx tsc --noEmit 2>&1 | head -20", cwd=dir)
+    ELIF file in ["requirements.txt", "pyproject.toml"]:
+      # Importiere jede Dependency einmal
+      deps = parse_dependencies(location)
+      FOR each dep IN deps:
+        Bash("python -c 'import {dep}'", cwd=dir)
+
+IF ANY check failed:
+  HARD STOP: "Dependency Pre-Flight fehlgeschlagen. Behebe Konflikte vor Implementierung."
+```
+
+---
+
 ## Phase 2: Setup & State Management
 
 ```

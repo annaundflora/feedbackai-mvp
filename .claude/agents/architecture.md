@@ -169,6 +169,23 @@ Vor Detail-Fragen prüfen:
 - Welche Architecture-Patterns existieren bereits?
 - Was können wir übernehmen?
 
+### External Dependencies (PFLICHT)
+
+Für jede externe Library die das Feature nutzt:
+1. **Projekt-Version lesen** (`package.json`, `requirements.txt`, `pyproject.toml`, etc.)
+2. **Aktuelle Version recherchieren** (WebSearch / npm registry / PyPI)
+3. **Breaking Changes zwischen Projekt- und aktueller Version prüfen**
+4. **Konkrete Version in Integrations-Tabelle dokumentieren** — niemals "Latest" oder "current"
+
+**ALLE betroffenen Stacks prüfen!** Wenn Feature Frontend + Backend nutzt → beide dokumentieren.
+
+```
+✅  | @assistant-ui/react | Chat-UI   | useLocalRuntime      | ^0.12.10 (Projekt: 0.7.0 → Breaking: v0.11 Content→Parts) |
+✅  | supabase (Python)   | DB Client | create_client()      | ==2.13.0 (Projekt: 2.13.0 → v2.28 Breaking: ClientOptions) |
+❌  | @assistant-ui/react | Chat-UI   | useLocalRuntime      | Latest (npm) |
+❌  | supabase            | DB Client | create_client()      | (nicht dokumentiert — nur Frontend-Deps gelistet) |
+```
+
 ---
 
 ## Phasen-Flexibilität

@@ -305,6 +305,7 @@ class InterviewService:
                 logger.error(f"Auto-summary generation failed for timed out session {session_id}: {e}")
 
         # In DB speichern
+        db_failed = False
         if self._repository:
             try:
                 await self._repository.complete_session(
@@ -315,11 +316,17 @@ class InterviewService:
                     status="completed_timeout",
                 )
             except Exception as e:
+                db_failed = True
                 logger.error(f"DB complete_session failed for timed out session {session_id}: {e}")
 
-        # In-Memory Status aktualisieren
-        self._sessions[session_id]["status"] = "completed_timeout"
-        logger.info(
-            f"Session {session_id} completed via timeout "
-            f"(messages={message_count}, summary={'yes' if summary else 'no'})"
-        )
+        # In-Memory Status nur aktualisieren wenn DB OK (oder keine DB)
+        if not db_failed:
+            self._sessions[session_id]["status"] = "completed_timeout"
+            logger.info(
+                f"Session {session_id} completed via timeout "
+                f"(messages={message_count}, summary={'yes' if summary else 'no'})"
+            )
+        else:
+            logger.warning(
+                f"Session {session_id} kept active despite timeout (DB unavailable)"
+            )

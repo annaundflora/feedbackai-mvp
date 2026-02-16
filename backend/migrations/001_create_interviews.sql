@@ -3,7 +3,7 @@
 -- Date: 2026-02-13
 -- Description: Speichert Interview-Sessions mit Transkript und Summary
 
-CREATE TABLE IF NOT EXISTS interviews (
+CREATE TABLE IF NOT EXISTS mvp_interviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   anonymous_id TEXT NOT NULL,
   session_id UUID NOT NULL UNIQUE,
@@ -17,6 +17,6 @@ CREATE TABLE IF NOT EXISTS interviews (
   completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_interviews_anonymous_id ON interviews(anonymous_id);
-CREATE INDEX IF NOT EXISTS idx_interviews_session_id ON interviews(session_id);
-CREATE INDEX IF NOT EXISTS idx_interviews_status ON interviews(status);
+CREATE INDEX IF NOT EXISTS idx_mvp_interviews_anonymous_id ON mvp_interviews(anonymous_id);
+CREATE INDEX IF NOT EXISTS idx_mvp_interviews_session_id ON mvp_interviews(session_id);
+CREATE INDEX IF NOT EXISTS idx_mvp_interviews_status ON mvp_interviews(status);

@@ -11,6 +11,44 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import React, { useReducer } from 'react'
+
+// Mock @assistant-ui/react for ChatScreen
+vi.mock('@assistant-ui/react', () => ({
+  ThreadPrimitive: {
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div data-testid="thread-root" className={className} role="log" aria-live="polite">{children}</div>
+    ),
+    Empty: ({ children }: { children: React.ReactNode }) => <div data-testid="thread-empty">{children}</div>,
+    Viewport: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div className={className}>{children}</div>
+    ),
+    Messages: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  },
+  MessagePrimitive: {
+    Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    If: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: () => <div>Mock message</div>,
+  },
+  ComposerPrimitive: {
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <form className={className}>{children}</form>
+    ),
+    Input: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+      <textarea data-testid="composer-input" placeholder={props.placeholder} />
+    ),
+    Send: ({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+      <button aria-label={rest['aria-label']}>{children}</button>
+    ),
+  },
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
+  useThreadRuntime: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({ messages: [] })),
+    cancelRun: vi.fn(),
+    startRun: vi.fn(),
+  })),
+}))
+
 import { widgetReducer, initialState, type WidgetState, type WidgetScreen } from '../../src/reducer'
 import { ConsentScreen } from '../../src/components/screens/ConsentScreen'
 import { ChatScreen } from '../../src/components/screens/ChatScreen'
@@ -45,7 +83,7 @@ function ScreenRouter({
         />
       )
     case 'chat':
-      return <ChatScreen config={config} />
+      return <ChatScreen config={config} controls={{ endInterview: async () => {}, hasActiveSession: () => false }} onRestart={() => {}} onRedirectToThankYou={() => {}} />
     case 'thankyou':
       return (
         <ThankYouScreen

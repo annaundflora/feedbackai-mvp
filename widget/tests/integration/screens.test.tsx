@@ -11,6 +11,44 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import React from 'react'
+
+// Mock @assistant-ui/react for ChatScreen components
+vi.mock('@assistant-ui/react', () => ({
+  ThreadPrimitive: {
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div data-testid="thread-root" className={className} role="log" aria-live="polite">{children}</div>
+    ),
+    Empty: ({ children }: { children: React.ReactNode }) => <div data-testid="thread-empty">{children}</div>,
+    Viewport: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div className={className}>{children}</div>
+    ),
+    Messages: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  },
+  MessagePrimitive: {
+    Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    If: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: () => <div>Mock message</div>,
+  },
+  ComposerPrimitive: {
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <form className={className}>{children}</form>
+    ),
+    Input: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+      <textarea data-testid="composer-input" placeholder={props.placeholder} />
+    ),
+    Send: ({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+      <button aria-label={rest['aria-label']}>{children}</button>
+    ),
+  },
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
+  useThreadRuntime: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({ messages: [] })),
+    cancelRun: vi.fn(),
+    startRun: vi.fn(),
+  })),
+}))
+
 import { ConsentScreen } from '../../src/components/screens/ConsentScreen'
 import { ChatScreen } from '../../src/components/screens/ChatScreen'
 import { ThankYouScreen } from '../../src/components/screens/ThankYouScreen'
@@ -59,6 +97,11 @@ describe('integration: ConsentScreen', () => {
   })
 })
 
+const mockControls = {
+  endInterview: vi.fn(),
+  hasActiveSession: vi.fn(() => false),
+}
+
 describe('integration: ChatScreen', () => {
   const mockConfig = {
     apiUrl: null,
@@ -79,17 +122,17 @@ describe('integration: ChatScreen', () => {
   })
 
   it('should render placeholder text "Chat bereit"', () => {
-    render(<ChatScreen config={mockConfig} />)
+    render(<ChatScreen config={mockConfig} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
     expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
   })
 
   it('should render composer placeholder', () => {
-    render(<ChatScreen config={mockConfig} />)
+    render(<ChatScreen config={mockConfig} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
     expect(screen.getByPlaceholderText('Nachricht eingeben...')).toBeInTheDocument()
   })
 
   it('should render chat icon with aria-hidden', () => {
-    render(<ChatScreen config={mockConfig} />)
+    render(<ChatScreen config={mockConfig} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
     const svgs = document.querySelectorAll('svg[aria-hidden="true"]')
     expect(svgs.length).toBeGreaterThan(0)
   })

@@ -13,7 +13,7 @@ export function AssistantMessage() {
 
       {/* Message Bubble */}
       <div className="max-w-[80%] bg-gray-100 text-gray-900 rounded-xl px-3 py-2 text-sm leading-relaxed">
-        <MessagePrimitive.Content />
+        <MessagePrimitive.Parts />
       </div>
     </MessagePrimitive.Root>
   )

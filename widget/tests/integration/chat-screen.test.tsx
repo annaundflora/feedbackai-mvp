@@ -15,9 +15,6 @@ import React, { useReducer } from 'react'
 
 // Mock @assistant-ui/react with functional primitives
 vi.mock('@assistant-ui/react', () => ({
-  AssistantRuntimeProvider: ({ children, runtime }: { children: React.ReactNode; runtime: unknown }) => (
-    <div data-testid="runtime-provider">{children}</div>
-  ),
   ThreadPrimitive: {
     Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
       <div data-testid="thread-root" className={className} role="log" aria-live="polite">
@@ -61,12 +58,24 @@ vi.mock('@assistant-ui/react', () => ({
     ),
   },
   useLocalRuntime: vi.fn(() => ({ _type: 'mocked-runtime' })),
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
+  useThreadRuntime: vi.fn(() => ({
+    subscribe: vi.fn(() => vi.fn()),
+    getState: vi.fn(() => ({ messages: [] })),
+    cancelRun: vi.fn(),
+    startRun: vi.fn(),
+  })),
 }))
 
 import { ChatScreen } from '../../src/components/screens/ChatScreen'
 import { ConsentScreen } from '../../src/components/screens/ConsentScreen'
 import { widgetReducer, initialState, type WidgetScreen } from '../../src/reducer'
 import type { WidgetConfig } from '../../src/config'
+
+const mockControls = {
+  endInterview: vi.fn(),
+  hasActiveSession: vi.fn(() => false),
+}
 
 const TEST_CONFIG: WidgetConfig = {
   apiUrl: null,
@@ -87,23 +96,20 @@ afterEach(() => {
 })
 
 describe('integration: ChatScreen composition', () => {
-  it('ChatScreen renders runtime provider wrapping thread and composer', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+  it('ChatScreen renders thread and composer together', () => {
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
-    const provider = screen.getByTestId('runtime-provider')
-    expect(provider).toBeInTheDocument()
-
-    // Thread inside provider
+    // Thread rendered
     const threadRoot = screen.getByTestId('thread-root')
-    expect(provider.contains(threadRoot)).toBe(true)
+    expect(threadRoot).toBeInTheDocument()
 
-    // Composer inside provider
+    // Composer rendered
     const composerRoot = screen.getByTestId('composer-root')
-    expect(provider.contains(composerRoot)).toBe(true)
+    expect(composerRoot).toBeInTheDocument()
   })
 
   it('ChatThread shows welcome state when thread is empty', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     // ThreadPrimitive.Empty renders the welcome message
     expect(screen.getByText('Bereit für Ihr Feedback')).toBeInTheDocument()
@@ -113,21 +119,21 @@ describe('integration: ChatScreen composition', () => {
   })
 
   it('ChatComposer receives placeholder from config.texts.composerPlaceholder', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     const input = screen.getByTestId('composer-input')
     expect(input).toHaveAttribute('placeholder', 'Nachricht eingeben...')
   })
 
   it('send button has aria-label for accessibility', () => {
-    render(<ChatScreen config={TEST_CONFIG} />)
+    render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     const sendButton = screen.getByTestId('composer-send')
     expect(sendButton).toHaveAttribute('aria-label', 'Nachricht senden')
   })
 
   it('ChatScreen layout has thread area above and composer area below', () => {
-    const { container } = render(<ChatScreen config={TEST_CONFIG} />)
+    const { container } = render(<ChatScreen config={TEST_CONFIG} controls={mockControls} onRestart={vi.fn()} onRedirectToThankYou={vi.fn()} />)
 
     const flexContainer = container.querySelector('.flex.flex-col.h-full')
     expect(flexContainer).not.toBeNull()
@@ -169,7 +175,7 @@ describe('integration: ScreenRouter routes to ChatScreen', () => {
           />
         )
       case 'chat':
-        return <ChatScreen config={config} />
+        return <ChatScreen config={config} controls={mockControls} onRestart={() => {}} onRedirectToThankYou={() => {}} />
       default:
         return null
     }
@@ -184,8 +190,7 @@ describe('integration: ScreenRouter routes to ChatScreen', () => {
       />
     )
 
-    // ChatScreen should be rendered with runtime provider
-    expect(screen.getByTestId('runtime-provider')).toBeInTheDocument()
+    // ChatScreen should be rendered with thread and composer
     expect(screen.getByTestId('thread-root')).toBeInTheDocument()
     expect(screen.getByTestId('composer-root')).toBeInTheDocument()
   })

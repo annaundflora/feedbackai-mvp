@@ -17,7 +17,6 @@ vi.mock('@assistant-ui/react', () => ({
       </div>
     ),
     Empty: ({ children }: { children: React.ReactNode }) => (
-      // Simulate empty state (no messages)
       <div data-testid="thread-empty">{children}</div>
     ),
     Viewport: ({ children, className }: { children: React.ReactNode; className?: string }) => (
@@ -36,6 +35,7 @@ vi.mock('@assistant-ui/react', () => ({
     If: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Content: () => <div data-testid="message-content">Mock message</div>,
   },
+  useThread: vi.fn(() => ({ isRunning: false, messages: [] })),
 }))
 
 // Must import after mocks
