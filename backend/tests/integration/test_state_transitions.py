@@ -280,8 +280,7 @@ class TestCrossSliceIntegration:
             os.environ,
             {
                 "OPENROUTER_API_KEY": "test-key",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-supabase-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             },
             clear=False,
         ):
@@ -289,8 +288,7 @@ class TestCrossSliceIntegration:
 
             # Verify critical settings are loaded
             assert settings.openrouter_api_key is not None
-            assert settings.supabase_url is not None
-            assert settings.supabase_key is not None
+            assert settings.database_url is not None
 
     def test_interview_graph_in_service(self, client, mock_graph):
         """E2E Checklist: Integration Point 2.
@@ -528,8 +526,7 @@ class TestBusinessRules:
             os.environ,
             {
                 "OPENROUTER_API_KEY": "test-key",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-supabase-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
                 "SESSION_TIMEOUT_SECONDS": "120",
             },
             clear=False,

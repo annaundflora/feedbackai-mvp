@@ -21,15 +21,25 @@ class Settings(BaseSettings):
     llm_timeout_seconds: int = 30
     db_timeout_seconds: int = 10
 
-    # Supabase
-    supabase_url: str
-    supabase_key: str
+    # PostgreSQL
+    database_url: str
+    db_echo: bool = False
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
 
     # LangSmith (optional)
     langsmith_tracing: bool = True
     langsmith_endpoint: str = "https://eu.api.smith.langchain.com"
     langsmith_api_key: str = ""
     langsmith_project: str = "FeedbackAI"
+
+    @property
+    def async_database_url(self) -> str:
+        """Konvertiert postgresql:// zu postgresql+asyncpg:// fuer async Engine."""
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
     model_config = {
         "env_file": "../.env",

@@ -154,14 +154,13 @@ function Widget({ config }: { config: WidgetConfig }) {
 (function() {
   // Singleton check
   if (document.querySelector('.feedbackai-widget')) {
-    console.warn('FeedbackAI Widget already mounted')
     return
   }
 
   // Find script tag
   const scriptTag = findWidgetScript()
   if (!scriptTag) {
-    console.error('FeedbackAI Widget script tag not found')
+    console.error('FeedbackAI: script tag not found')
     return
   }
 
@@ -177,36 +176,9 @@ function Widget({ config }: { config: WidgetConfig }) {
   const root = ReactDOM.createRoot(container)
   root.render(
     <React.StrictMode>
-      <Suspense fallback={
-        <div className="feedbackai-widget">
-          <div style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: '#3b82f6',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: 0.6
-          }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              border: '3px solid white',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-          </div>
-        </div>
-      }>
+      <Suspense fallback={null}>
         <Widget config={config} />
       </Suspense>
     </React.StrictMode>
   )
-
-  console.log('FeedbackAI Widget mounted', config)
 })()

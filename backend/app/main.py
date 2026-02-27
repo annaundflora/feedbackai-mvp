@@ -2,11 +2,16 @@
 
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as interview_router
 from app.config.settings import Settings
+from app.db.session import dispose_engine
+
+# Load .env into os.environ so LangChain/LangSmith SDK can read LANGSMITH_* vars
+load_dotenv(dotenv_path="../.env", override=False)
 
 
 @asynccontextmanager
@@ -20,6 +25,8 @@ async def lifespan(app: FastAPI):
     timeout_manager = getattr(app.state, "timeout_manager", None)
     if timeout_manager:
         timeout_manager.cancel_all()
+    # DB-Engine schliessen
+    await dispose_engine()
 
 
 app = FastAPI(

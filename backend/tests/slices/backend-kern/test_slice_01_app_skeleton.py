@@ -28,21 +28,18 @@ class TestSettings:
         """AC 2: Settings laden alle Pflicht-Variablen."""
         with patch.dict("os.environ", {
             "OPENROUTER_API_KEY": "test-key",
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_KEY": "test-supabase-key",
+            "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
         }, clear=False):
             from app.config.settings import Settings
             settings = Settings()
             assert settings.openrouter_api_key == "test-key"
-            assert settings.supabase_url == "https://test.supabase.co"
-            assert settings.supabase_key == "test-supabase-key"
+            assert settings.database_url == "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai"
 
     def test_settings_default_values(self):
         """AC 2: Default-Werte sind korrekt gesetzt."""
         with patch.dict("os.environ", {
             "OPENROUTER_API_KEY": "test-key",
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_KEY": "test-supabase-key",
+            "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
         }, clear=False):
             from app.config.settings import Settings
             settings = Settings()
@@ -58,9 +55,9 @@ class TestSettings:
         """AC 3: Fehlende Pflicht-Variablen werfen ValidationError."""
         from pydantic import ValidationError
         from app.config.settings import Settings
-        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {"PATH": ""}, clear=True):
             with pytest.raises(ValidationError):
-                Settings()
+                Settings(_env_file=None)
 
 
 # -- DDD-Ordnerstruktur --
@@ -157,17 +154,17 @@ class TestEnvExample:
 
     ENV_EXAMPLE = Path(__file__).resolve().parents[4] / ".env.example"
 
-    def test_supabase_url_present(self):
+    def test_database_url_present(self):
         content = self.ENV_EXAMPLE.read_text(encoding="utf-8")
-        assert "SUPABASE_URL=" in content
+        assert "DATABASE_URL=" in content
 
-    def test_supabase_key_present(self):
+    def test_supabase_url_removed(self):
         content = self.ENV_EXAMPLE.read_text(encoding="utf-8")
-        assert "SUPABASE_KEY=" in content
+        assert "SUPABASE_URL=" not in content
 
-    def test_database_url_removed(self):
+    def test_supabase_key_removed(self):
         content = self.ENV_EXAMPLE.read_text(encoding="utf-8")
-        assert "DATABASE_URL=" not in content
+        assert "SUPABASE_KEY=" not in content
 
     def test_timeout_vars_present(self):
         content = self.ENV_EXAMPLE.read_text(encoding="utf-8")
@@ -194,8 +191,7 @@ def client():
     """TestClient mit gemockten Settings (kein .env noetig)."""
     with patch.dict("os.environ", {
         "OPENROUTER_API_KEY": "test-key",
-        "SUPABASE_URL": "https://test.supabase.co",
-        "SUPABASE_KEY": "test-supabase-key",
+        "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
     }, clear=False):
         from app.main import app
         with TestClient(app) as c:

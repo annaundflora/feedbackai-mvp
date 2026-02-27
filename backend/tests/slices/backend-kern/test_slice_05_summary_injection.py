@@ -18,8 +18,8 @@ def mock_settings():
     settings.interviewer_max_tokens = 4000
     settings.llm_timeout_seconds = 30
     settings.db_timeout_seconds = 10
-    settings.supabase_url = "https://test.supabase.co"
-    settings.supabase_key = "test-supabase-key"
+    settings.database_url = "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai"
+    settings.async_database_url = "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai"
     return settings
 
 
@@ -250,8 +250,7 @@ class TestInterviewGraphSummaries:
         with patch("app.interview.graph.ChatOpenAI"):
             with patch.dict("os.environ", {
                 "OPENROUTER_API_KEY": "test",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             }, clear=False):
                 from app.config.settings import Settings
                 from app.interview.graph import InterviewGraph
@@ -265,8 +264,7 @@ class TestInterviewGraphSummaries:
         with patch("app.interview.graph.ChatOpenAI"):
             with patch.dict("os.environ", {
                 "OPENROUTER_API_KEY": "test",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             }, clear=False):
                 from app.config.settings import Settings
                 from app.interview.graph import InterviewGraph
@@ -281,8 +279,7 @@ class TestInterviewGraphSummaries:
         with patch("app.interview.graph.ChatOpenAI"):
             with patch.dict("os.environ", {
                 "OPENROUTER_API_KEY": "test",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             }, clear=False):
                 from app.config.settings import Settings
                 from app.interview.graph import InterviewGraph
@@ -296,8 +293,7 @@ class TestInterviewGraphSummaries:
         with patch("app.interview.graph.ChatOpenAI"):
             with patch.dict("os.environ", {
                 "OPENROUTER_API_KEY": "test",
-                "SUPABASE_URL": "https://test.supabase.co",
-                "SUPABASE_KEY": "test-key",
+                "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             }, clear=False):
                 from app.config.settings import Settings
                 from app.interview.graph import InterviewGraph

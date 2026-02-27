@@ -71,8 +71,7 @@ def client(mock_graph, mock_repository, mock_summary_service):
         "os.environ",
         {
             "OPENROUTER_API_KEY": "test-key",
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_KEY": "test-supabase-key",
+            "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
             "SESSION_TIMEOUT_SECONDS": "60",
         },
         clear=False,
@@ -110,8 +109,7 @@ def real_client():
         "os.environ",
         {
             "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY", "test-key"),
-            "SUPABASE_URL": os.getenv("SUPABASE_URL", "https://test.supabase.co"),
-            "SUPABASE_KEY": os.getenv("SUPABASE_KEY", "test-supabase-key"),
+            "DATABASE_URL": os.getenv("DATABASE_URL", "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai"),
             "SESSION_TIMEOUT_SECONDS": "5",  # Short timeout for tests
         },
         clear=False,

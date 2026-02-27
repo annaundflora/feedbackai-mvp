@@ -49,8 +49,9 @@ export function ChatThread() {
         )}
       </ThreadPrimitive.Empty>
 
-      {/* Message List */}
-      <ThreadPrimitive.Viewport className="px-4 py-2">
+      {/* Message List — Viewport MUST be the scroll container for auto-scroll to work.
+           assistant-ui's useThreadViewportAutoScroll calls div.scrollTo() on this element. */}
+      <ThreadPrimitive.Viewport className="h-full overflow-y-auto chat-thread px-4 py-2">
         <ThreadPrimitive.Messages components={{ UserMessage: ChatMessage, AssistantMessage: AssistantMessage }} />
         {showTypingIndicator && <TypingIndicator />}
       </ThreadPrimitive.Viewport>

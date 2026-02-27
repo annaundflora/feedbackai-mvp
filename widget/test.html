@@ -125,7 +125,7 @@
     </div>
 
     <div class="test-step">
-      <strong>9. Mobile Test (<=768px)</strong>
+      <strong>9. Mobile Test (&lt;=768px)</strong>
       <p class="expected">✓ Chat Screen Fullscreen</p>
       <p class="expected">✓ Composer Input lesbar</p>
       <p class="expected">✓ Send-Button Touch Target ≥44px</p>
@@ -183,10 +183,13 @@ FeedbackAI Widget mounted { lang: 'de', apiUrl: null, texts: {...} }
   </div>
 
   <!-- Widget Embed -->
-  <script
-    src="./dist/widget.js"
-    data-lang="de"
-    data-api-url="http://localhost:8000"
-  ></script>
+  <script>
+    // Cache-bust widget.js during development
+    var s = document.createElement('script');
+    s.src = './dist/widget.js?v=' + Date.now();
+    s.dataset.lang = 'de';
+    s.dataset.apiUrl = 'http://localhost:8000';
+    document.body.appendChild(s);
+  </script>
 </body>
 </html>

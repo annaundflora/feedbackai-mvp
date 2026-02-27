@@ -52,8 +52,7 @@ def client(mock_graph):
         "os.environ",
         {
             "OPENROUTER_API_KEY": "test-key",
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_KEY": "test-supabase-key",
+            "DATABASE_URL": "postgresql+asyncpg://feedbackai:feedbackai_dev@localhost:5432/feedbackai",
         },
         clear=False,
     ):

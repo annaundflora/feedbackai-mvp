@@ -22,7 +22,7 @@ def print_banner():
     print(f"{BLUE}{BOLD}")
     print("╔════════════════════════════════════════╗")
     print("║   FeedbackAI Backend Launcher          ║")
-    print("║   FastAPI + LangGraph + Supabase       ║")
+    print("║   FastAPI + LangGraph + PostgreSQL      ║")
     print("╚════════════════════════════════════════╝")
     print(f"{RESET}\n")
 
@@ -36,8 +36,7 @@ def check_env_file():
         print(f"{YELLOW}→ Kopiere .env.example nach .env und fülle die Werte aus{RESET}\n")
         print("  Erforderliche Variablen:")
         print("  - OPENROUTER_API_KEY")
-        print("  - SUPABASE_URL")
-        print("  - SUPABASE_KEY")
+        print("  - DATABASE_URL")
         return False
 
     # Lade .env
@@ -50,7 +49,7 @@ def check_env_file():
                 env_vars[key.strip()] = value.strip()
 
     # Prüfe kritische Variablen
-    required = ["OPENROUTER_API_KEY", "SUPABASE_URL", "SUPABASE_KEY"]
+    required = ["OPENROUTER_API_KEY", "DATABASE_URL"]
     missing = []
 
     for var in required:
@@ -84,10 +83,11 @@ def check_dependencies():
 
 
 def show_migration_hint():
-    """Zeigt Hinweis zur Supabase Migration"""
-    print(f"\n{YELLOW}📋 Supabase Migration:{RESET}")
-    print("   Stelle sicher, dass die Migration ausgeführt wurde:")
-    print(f"   {BLUE}→ Supabase Dashboard → SQL Editor → backend/migrations/001_create_interviews.sql{RESET}")
+    """Zeigt Hinweis zur PostgreSQL Migration"""
+    print(f"\n{YELLOW}📋 PostgreSQL Setup:{RESET}")
+    print("   Stelle sicher, dass PostgreSQL läuft:")
+    print(f"   {BLUE}→ docker-compose up -d{RESET}")
+    print(f"   Schema wird automatisch beim ersten Start angelegt.")
     print()
 
 

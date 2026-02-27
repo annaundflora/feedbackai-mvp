@@ -76,7 +76,7 @@ function ChatScreenInner({ config, controls, onRestart, onRedirectToThankYou }: 
   return (
     <div className="flex flex-col h-full">
       {/* Thread Area */}
-      <div className="flex-1 overflow-y-auto chat-thread">
+      <div className="flex-1 min-h-0">
         <ChatThread />
         {error && (
           <ErrorDisplay

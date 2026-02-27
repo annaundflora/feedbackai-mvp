@@ -3,7 +3,7 @@
 from fastapi import Request
 
 from app.config.settings import Settings
-from app.db.supabase import get_supabase_client
+from app.db.session import get_session_factory
 from app.insights.summary import SummaryService
 from app.interview.graph import InterviewGraph
 from app.interview.repository import InterviewRepository
@@ -23,11 +23,8 @@ def get_interview_service(request: Request) -> InterviewService:
     if _interview_service is None:
         settings: Settings = request.app.state.settings
         graph = InterviewGraph(settings=settings)
-        supabase_client = get_supabase_client(settings)
-        repository = InterviewRepository(
-            supabase_client=supabase_client,
-            settings=settings,
-        )
+        session_factory = get_session_factory(settings)
+        repository = InterviewRepository(session_factory=session_factory)
         summary_service = SummaryService(settings=settings)
 
         # InterviewService zuerst ohne TimeoutManager erstellen
