@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     clustering_batch_size: int = 20
     clustering_pipeline_timeout_seconds: int = 600
 
+    # ClusteringGraph Defaults (Slice 3)
+    clustering_model_default: str = "anthropic/claude-sonnet-4"
+    summary_model_default: str = "anthropic/claude-haiku-4"
+    clustering_split_threshold: int = 8          # Facts/Cluster -> Split-Suggestion
+    clustering_merge_similarity_threshold: float = 0.8  # 80% -> Merge-Suggestion
+    clustering_taxonomy_batch_size: int = 20     # Facts pro Batch bei generate_taxonomy
+
     @property
     def async_database_url(self) -> str:
         """Konvertiert postgresql:// zu postgresql+asyncpg:// fuer async Engine."""

@@ -172,6 +172,7 @@ class FactExtractionService:
                         interview_id=interview_id,
                     )
                 )
+                logger.info(f"Clustering triggered for interview {interview_id} in project {project_id}")
 
         except FactExtractionError as e:
             logger.error(f"Fact extraction failed for interview {interview_id}: {e}")

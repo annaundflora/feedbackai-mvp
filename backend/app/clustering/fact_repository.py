@@ -174,3 +174,62 @@ class FactRepository:
 
             rows = result.mappings().all()
             return [dict(row) for row in rows]
+
+    async def update_cluster_assignments(
+        self,
+        assignments: list[dict],
+    ) -> None:
+        """Aktualisiert cluster_id fuer eine Liste von Facts.
+
+        Args:
+            assignments: Liste von {fact_id: str, cluster_id: str | None}.
+                         cluster_id=None -> unassigned.
+
+        Verwendet einzelne UPDATE-Statements fuer Korrektheit.
+        """
+        if not assignments:
+            return
+
+        async with self._session_factory() as session:
+            for assignment in assignments:
+                fact_id = assignment.get("fact_id")
+                cluster_id = assignment.get("cluster_id")
+
+                if not fact_id:
+                    continue
+
+                await session.execute(
+                    text(
+                        "UPDATE facts "
+                        "SET cluster_id = :cluster_id "
+                        "WHERE id = :fact_id"
+                    ),
+                    {
+                        "fact_id": str(fact_id),
+                        "cluster_id": str(cluster_id) if cluster_id else None,
+                    },
+                )
+
+            await session.commit()
+
+        logger.info(f"Updated cluster assignments for {len(assignments)} facts")
+
+    async def reset_cluster_assignments_for_project(
+        self,
+        project_id: str,
+    ) -> None:
+        """Setzt alle facts.cluster_id = NULL fuer ein Projekt (Full Re-Cluster).
+
+        UPDATE facts SET cluster_id = NULL WHERE project_id = :project_id
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "UPDATE facts SET cluster_id = NULL WHERE project_id = :project_id"
+                ),
+                {"project_id": project_id},
+            )
+            await session.commit()
+            updated_count = result.rowcount
+
+        logger.info(f"Reset cluster assignments for {updated_count} facts in project {project_id}")

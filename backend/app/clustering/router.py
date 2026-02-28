@@ -1,12 +1,19 @@
-"""FastAPI Router fuer Projekt-CRUD, Interview-Zuordnung und Fact Extraction Retry.
+"""FastAPI Router fuer Projekt-CRUD, Interview-Zuordnung, Fact Extraction Retry
+und Clustering Pipeline.
 
-Implementiert 11 Endpunkte:
+Implementiert 14 Endpunkte:
   - 7 Projekt-CRUD Endpunkte
   - 3 Interview-Assignment Endpunkte
   - 1 Retry-Endpunkt (Slice 2)
+  - 1 Cluster-List Endpunkt (Slice 3)
+  - 1 Recluster-Endpunkt (Slice 3)
+  - 1 Status-Endpunkt (Slice 3)
 """
-from fastapi import APIRouter, Depends, Query, Request, Response
+import asyncio
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+
+from app.clustering.cluster_repository import ClusterRepository
 from app.clustering.interview_assignment_repository import InterviewAssignmentRepository
 from app.clustering.interview_assignment_service import InterviewAssignmentService
 from app.clustering.project_repository import ProjectRepository
@@ -15,10 +22,13 @@ from app.clustering.schemas import (
     AssignRequest,
     AvailableInterview,
     ChangeSourceRequest,
+    ClusterResponse,
     CreateProjectRequest,
     InterviewAssignment,
+    PipelineStatus,
     ProjectListItem,
     ProjectResponse,
+    ReclusterStarted,
     UpdateModelsRequest,
     UpdateProjectRequest,
 )
@@ -262,4 +272,118 @@ async def retry_interview_extraction(
     return await service.retry(
         project_id=project_id,
         interview_id=interview_id,
+    )
+
+
+# ============================================================
+# Clustering Pipeline Endpunkte (Slice 3)
+# ============================================================
+
+
+def get_cluster_repository(request: Request) -> ClusterRepository:
+    """FastAPI Dependency fuer ClusterRepository."""
+    settings: Settings = request.app.state.settings
+    session_factory = get_session_factory(settings)
+    return ClusterRepository(session_factory=session_factory)
+
+
+def get_clustering_service(request: Request):
+    """FastAPI Dependency fuer ClusteringService (Singleton aus app.state)."""
+    service = getattr(request.app.state, "clustering_service", None)
+    if service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Clustering service not available",
+        )
+    return service
+
+
+@router.get(
+    "/projects/{project_id}/clusters",
+    response_model=list[ClusterResponse],
+)
+async def list_clusters(
+    project_id: str,
+    cluster_repo: ClusterRepository = Depends(get_cluster_repository),
+) -> list[ClusterResponse]:
+    """Listet alle Cluster eines Projekts.
+
+    GET /api/projects/{id}/clusters
+    Response 200: list[ClusterResponse] sortiert nach fact_count DESC
+    """
+    clusters = await cluster_repo.list_for_project(project_id=project_id)
+    return clusters
+
+
+@router.post(
+    "/projects/{project_id}/clustering/recluster",
+    response_model=ReclusterStarted,
+)
+async def trigger_full_recluster(
+    project_id: str,
+    clustering_service=Depends(get_clustering_service),
+) -> ReclusterStarted:
+    """Loescht alle Cluster und startet vollstaendiges Re-Clustering.
+
+    Destruktiv: Alle bestehenden Cluster-Zuordnungen werden geloescht.
+    Facts bleiben erhalten.
+
+    Gibt sofort 200 zurueck (Recluster laeuft asynchron als Background-Task).
+    Falls Recluster bereits laeuft: 409 Conflict.
+
+    POST /api/projects/{id}/clustering/recluster
+    Response 200: ReclusterStarted
+    Response 404: Projekt nicht gefunden
+    Response 409: Re-Cluster laeuft bereits
+    """
+    from app.clustering.service import ConflictError
+
+    # Pruefe ob ein Recluster bereits laeuft (synchron, bevor Background-Task gestartet wird)
+    if project_id in clustering_service._running_recluster:
+        raise HTTPException(
+            status_code=409,
+            detail="Full re-cluster already running for this project",
+        )
+
+    # Starte Full-Recluster als Background-Task (fire-and-forget)
+    asyncio.create_task(
+        clustering_service.full_recluster(project_id=project_id)
+    )
+
+    return ReclusterStarted(
+        status="started",
+        message=f"Full re-cluster started for project {project_id}",
+        project_id=project_id,
+    )
+
+
+@router.get(
+    "/projects/{project_id}/clustering/status",
+    response_model=PipelineStatus,
+)
+async def get_clustering_status(
+    project_id: str,
+    clustering_service=Depends(get_clustering_service),
+) -> PipelineStatus:
+    """Gibt den aktuellen Status der Clustering-Pipeline zurueck.
+
+    GET /api/projects/{id}/clustering/status
+    Response 200: PipelineStatus
+    """
+    # Pruefe ob ein Full-Recluster laeuft
+    is_running = project_id in clustering_service._running_recluster
+
+    if is_running:
+        return PipelineStatus(
+            status="running",
+            mode="full",
+            progress=None,
+            current_step=None,
+        )
+
+    return PipelineStatus(
+        status="idle",
+        mode=None,
+        progress=None,
+        current_step=None,
     )

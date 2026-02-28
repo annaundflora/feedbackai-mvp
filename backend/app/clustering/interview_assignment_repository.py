@@ -254,3 +254,52 @@ class InterviewAssignmentRepository:
             await session.commit()
             row = result.mappings().first()
             return dict(row) if row else {}
+
+    async def update_clustering_status(
+        self,
+        interview_id: str,
+        clustering_status: str,  # 'pending' | 'running' | 'completed' | 'failed'
+    ) -> dict:
+        """Aktualisiert clustering_status in project_interviews.
+
+        Args:
+            interview_id: UUID als String.
+            clustering_status: Neuer Status.
+
+        Returns:
+            Aktualisierter DB-Row als Dict.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "UPDATE project_interviews "
+                    "SET clustering_status = :clustering_status "
+                    "WHERE interview_id = :interview_id "
+                    "RETURNING *"
+                ),
+                {
+                    "interview_id": interview_id,
+                    "clustering_status": clustering_status,
+                },
+            )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else {}
+
+    async def get_all_for_project(
+        self,
+        project_id: str,
+    ) -> list[dict]:
+        """Laedt alle Zuordnungen eines Projekts (fuer Status-Aggregation)."""
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT project_id, interview_id, extraction_status, clustering_status, assigned_at "
+                    "FROM project_interviews "
+                    "WHERE project_id = :project_id "
+                    "ORDER BY assigned_at ASC"
+                ),
+                {"project_id": project_id},
+            )
+            rows = result.mappings().all()
+            return [dict(row) for row in rows]

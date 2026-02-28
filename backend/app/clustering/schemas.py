@@ -105,3 +105,36 @@ class AvailableInterview(BaseModel):
     session_id: uuid.UUID
     created_at: datetime
     summary_preview: str | None
+
+
+# --- Clustering Pipeline DTOs (Slice 3) ---
+
+
+class ReclusterStarted(BaseModel):
+    """Response fuer POST /recluster."""
+
+    status: str = "started"
+    message: str  # "Full re-cluster started for project {id}"
+    project_id: str
+
+
+class PipelineStatus(BaseModel):
+    """Response fuer GET /clustering/status."""
+
+    status: str              # "idle" | "running"
+    mode: str | None         # "incremental" | "full" | None
+    progress: dict | None    # {"total": int, "completed": int} | None
+    current_step: str | None  # z.B. "assign_facts" | "generate_summaries" | None
+
+
+class ClusterResponse(BaseModel):
+    """Response-DTO fuer einen Cluster."""
+
+    id: uuid.UUID
+    project_id: uuid.UUID
+    name: str
+    summary: str | None
+    fact_count: int
+    interview_count: int
+    created_at: datetime
+    updated_at: datetime
