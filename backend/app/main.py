@@ -7,8 +7,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as interview_router
+from app.clustering.router import router as clustering_router
+from app.clustering.models import run_migration
 from app.config.settings import Settings
-from app.db.session import dispose_engine
+from app.db.session import dispose_engine, get_session_factory
 
 # Load .env into os.environ so LangChain/LangSmith SDK can read LANGSMITH_* vars
 load_dotenv(dotenv_path="../.env", override=False)
@@ -20,6 +22,11 @@ async def lifespan(app: FastAPI):
     # Startup
     settings = Settings()
     app.state.settings = settings
+
+    # DB-Migration fuer Clustering-Tabellen ausfuehren (idempotent)
+    session_factory = get_session_factory(settings)
+    await run_migration(session_factory)
+
     yield
     # Shutdown: Alle Timeout-Tasks canceln
     timeout_manager = getattr(app.state, "timeout_manager", None)
@@ -51,3 +58,4 @@ async def health_check():
 
 
 app.include_router(interview_router)
+app.include_router(clustering_router)
