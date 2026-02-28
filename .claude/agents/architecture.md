@@ -144,6 +144,7 @@ Wenn Recherche:
 | Server Logic | Alle Services mit Responsibilities, Inputs, Outputs, Side Effects |
 | Security | Auth/Authorization, Data Protection, Input Validation, Rate Limiting |
 | Architecture Layers | Routes, Services, Repos, Jobs mit Responsibilities |
+| Migration Map | Wenn Scope Migration/Refactoring enthält: Jede betroffene Datei mit Current → Target Pattern |
 | Constraints & Integrations | Technische Lösungen für Discovery-Constraints |
 | Quality Attributes (NFRs) | Technical approaches für Discovery-NFRs |
 | Risks & Assumptions | Technical mitigation für Discovery-Risks |
@@ -161,6 +162,9 @@ Agent geht APIs/Schema/Services/Layers gedanklich durch und erkennt Lücken.
 | Risk ohne Mitigation | "Was ist unsere technische Mitigation für Risk X?" |
 | Integration unklar | "Welche API/SDK nutzen wir für Integration X?" |
 | UI Component ohne Integration Point | "Wo wird Component X eingebunden? (Welche Page/Route?)" |
+| Scope enthält Migration aber keine Migration Map | "Der Scope erwähnt eine Migration/Refactoring. Welche Dateien sind betroffen und was ist das Ziel-Pattern für jede?" |
+| Migration Map hat Verzeichnisse statt Dateien | "Die Migration Map referenziert Verzeichnis {X}/ — welche konkreten Dateien darin sind betroffen?" |
+| Migration Map Anzahl weicht von Discovery ab | "Discovery sagt N Dateien, Migration Map hat M Zeilen — welche fehlen?" |
 
 ### Codebase als Referenz
 
@@ -171,19 +175,27 @@ Vor Detail-Fragen prüfen:
 
 ### External Dependencies (PFLICHT)
 
-Für jede externe Library die das Feature nutzt:
-1. **Projekt-Version lesen** (`package.json`, `requirements.txt`, `pyproject.toml`, etc.)
-2. **Aktuelle Version recherchieren** (WebSearch / npm registry / PyPI)
+Für jede externe Library, jedes Plugin und jede Plattform die das Feature nutzt:
+1. **Projekt-Version lesen** (`package.json`, `requirements.txt`, `pyproject.toml`, `composer.json`, etc.)
+2. **Aktuelle stabile Version recherchieren** (WebSearch / GitHub Releases / npm / PyPI / WordPress.org)
 3. **Breaking Changes zwischen Projekt- und aktueller Version prüfen**
 4. **Konkrete Version in Integrations-Tabelle dokumentieren** — niemals "Latest" oder "current"
 
 **ALLE betroffenen Stacks prüfen!** Wenn Feature Frontend + Backend nutzt → beide dokumentieren.
 
+**Greenfield-Projekte (kein package.json / composer.json vorhanden):**
+- Schritt 1 entfällt (kein Projekt-Version-File) → direkt zu Schritt 2
+- WebSearch PFLICHT für ALLE Libraries, Plugins und Plattformen
+- Auch CMS/Platform-Versionen explizit recherchieren: WordPress, WooCommerce, Shopify, etc.
+- Dokumentiere immer die tatsächlich neueste stabile Version — nicht Versionsmuster wie "9.x" raten
+
 ```
-✅  | @assistant-ui/react | Chat-UI   | useLocalRuntime      | ^0.12.10 (Projekt: 0.7.0 → Breaking: v0.11 Content→Parts) |
-✅  | supabase (Python)   | DB Client | create_client()      | ==2.13.0 (Projekt: 2.13.0 → v2.28 Breaking: ClientOptions) |
+✅  | Next.js             | Frontend  | App Router           | 16.x (recherchiert via GitHub Releases Feb 2026, neueste stabil) |
+✅  | WooCommerce         | E-Commerce| WC REST API          | 10.5.2 (recherchiert via WordPress.org Feb 2026) |
+✅  | @apollo/client      | GraphQL   | useQuery, useMutation| 4.x (recherchiert via npm Feb 2026, v4 = aktuell stable) |
 ❌  | @assistant-ui/react | Chat-UI   | useLocalRuntime      | Latest (npm) |
-❌  | supabase            | DB Client | create_client()      | (nicht dokumentiert — nur Frontend-Deps gelistet) |
+❌  | WooCommerce         | E-Commerce| —                    | 9.x (geraten, nicht recherchiert — aktuell wäre 10.x) |
+❌  | supabase            | DB Client | —                    | (nicht dokumentiert — nur Frontend-Deps gelistet) |
 ```
 
 ---
@@ -331,6 +343,13 @@ Q&A Log wird während der Session gesammelt und bei jedem Write mit aktualisiert
 | `## {Recherchethema}` | Zusammenfassungen aus Web-/Code-Recherche (Liste, Tabelle oder kurzer Absatz) |
 | `## Context & Research` | Immer wenn recherchiert wurde |
 
+### VOR dem Write der Integrations-Tabelle (Blocking)
+
+- [ ] Für jede Library/Platform einen WebSearch-Call gemacht?
+- [ ] Kein einziger Eintrag enthält "Latest", "current", "stable" oder Versionsmuster wie "9.x"?
+
+→ Falls nein: WebSearch nachholen, dann erst schreiben.
+
 ### NACH dem Write (Self-Check)
 
 **Pflicht:** Nach jedem Write das Dokument gegen Template prüfen.
@@ -344,6 +363,7 @@ Q&A Log wird während der Session gesammelt und bei jedem Write mit aktualisiert
 | Server Logic | ✅/❌ | |
 | Security | ✅/❌ | |
 | Architecture Layers | ✅/❌ | |
+| Migration Map | ✅/❌/N/A | PFLICHT wenn Scope Migration enthält, sonst N/A |
 | Constraints & Integrations | ✅/❌ | |
 | Quality Attributes (NFRs) | ✅/❌ | |
 | Risks & Assumptions | ✅/❌ | |
