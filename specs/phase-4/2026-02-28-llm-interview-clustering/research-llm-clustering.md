@@ -244,18 +244,9 @@ Nutzt LLM als "Triplet Oracle" — befragt LLM zu schwierigen Faellen ("Ist A na
 
 **Relevanz fuer uns:** SEHR HOCH. Clio's Facet-Extraction ist unser Fact-Extraction. Clio's Clustering+Description ist unser Cluster-Pipeline. Clio beweist, dass pure LLM-basiertes Clustering in Produktion funktioniert (Millionen Conversations).
 
-### 2.2 Anthropic Interviewer (Dezember 2025)
-
-**Source:** [Anthropic Interviewer](https://www.anthropic.com/research/clio)
-
-Anthropic selbst hat ein Claude-powered Qualitative-Research-Tool gebaut:
-- Plant Fragen, fuehrt 10-15 Min Gespraeche, clustert Themen fuer menschliche Analysten
-- 1.250 Professionals interviewt, Themen automatisch geclustert
-- Zeigt: Interview → Clustering Pipeline ist ein validierter Workflow bei Anthropic
-
 ---
 
-### 2.3 LLM-Based vs Traditional Clustering (Chris Ellis, Practitioner Blog)
+### 2.2 LLM-Based vs Traditional Clustering (Chris Ellis, Practitioner Blog)
 
 **Source:** [chrisellis.dev](https://www.chrisellis.dev/articles/comparing-llm-based-vs-traditional-clustering-for-support-conversations)
 
@@ -269,11 +260,11 @@ Anthropic selbst hat ein Claude-powered Qualitative-Research-Tool gebaut:
 | Erklaerbarkeit | Cluster = Vektoren (opak) | Cluster = Text-Labels (transparent) |
 | Voice of Customer | Oberflaechlich | Tief (versteht Intent) |
 
-**Fazit:** "LLM-basierte Clustering-Ansaetze uebertreffen klassische Algorithmen bei semantischer Kohaerenz, besonders fuer komplexe, nuancierte Gespraechsdaten."
+**Zitat:** "LLM-basierte Clustering-Ansaetze uebertreffen klassische Algorithmen bei semantischer Kohaerenz, besonders fuer komplexe, nuancierte Gespraechsdaten."
 
 ---
 
-### 2.4 Embedding vs Prompting (Side-by-Side Demo)
+### 2.3 Embedding vs Prompting (Side-by-Side Demo)
 
 **Code:** [github.com/intellectronica/text-clustering-embedding-vs-prompting](https://github.com/intellectronica/text-clustering-embedding-vs-prompting)
 
@@ -281,11 +272,19 @@ Direkter Vergleich: Embedding+k-means vs. reines LLM-Prompting. LLM-Prompting li
 
 ---
 
-### 2.5 Microsoft ISE: Customer Feedback Insights via LLM
+### 2.4 Microsoft ISE: Customer Feedback Insights via LLM
 
 **Source:** [Microsoft ISE Developer Blog](https://devblogs.microsoft.com/ise/insights_generation_from_customer_feedback_using_llms/)
 
 Produktions-Case fuer LLM-basierte Feedback-Analyse. Nutzt Prompt Engineering fuer Themen-Extraktion, Sentiment-Analyse und Wettbewerber-Vergleiche. Iteratives Prompt-Refinement fuer optimale Ergebnisse.
+
+---
+
+### 2.5 Semantic Clustering via LLM Prompts (Tutorial, 2025)
+
+**Source:** [Medium: Semantic Clustering with LLM Prompts](https://medium.com/data-science-collective/tutorial-semantic-clustering-of-user-messages-with-llm-prompts-5308b9b4bc5b)
+
+Inspiriert von Anthropic Clio. "AI hack to perform semantic clustering simply by prompting LLMs — from (data science + code) to (AI prompts + LLMs) for the same results, just faster and with less effort."
 
 ---
 
@@ -433,25 +432,19 @@ Cluster-Uebersicht:
 
 Pruefe:
 1. KOHAERENZ: Gehoeren alle Facts in einem Cluster thematisch zusammen?
-2. BALANCE: Gibt es Cluster die zu gross sind (>15 Facts) und gesplittet
-   werden sollten?
-3. UEBERLAPPUNG: Gibt es Cluster die zu aehnlich sind und gemergt werden
-   sollten?
-4. ABDECKUNG: Gibt es unzugeordnete Facts die einem Cluster zugeordnet
-   werden koennten?
+2. BALANCE: Gibt es Cluster die zu gross sind (>15 Facts) und gesplittet werden sollten?
+3. UEBERLAPPUNG: Gibt es Cluster die zu aehnlich sind und gemergt werden sollten?
+4. ABDECKUNG: Gibt es unzugeordnete Facts die einem Cluster zugeordnet werden koennten?
 5. RELEVANZ: Sind die Cluster-Namen praezise und beschreibend?
 
 Antworte als JSON:
 {
   "quality_score": 0.0-1.0,
   "issues": [
-    {"type": "merge_needed", "cluster_a": "...", "cluster_b": "...",
-     "reason": "..."},
+    {"type": "merge_needed", "cluster_a": "...", "cluster_b": "...", "reason": "..."},
     {"type": "split_needed", "cluster_id": "...", "reason": "..."},
-    {"type": "reassign", "fact_id": "...", "from_cluster": "...",
-     "to_cluster": "...", "reason": "..."},
-    {"type": "rename", "cluster_id": "...", "suggested_name": "...",
-     "reason": "..."}
+    {"type": "reassign", "fact_id": "...", "from_cluster": "...", "to_cluster": "...", "reason": "..."},
+    {"type": "rename", "cluster_id": "...", "suggested_name": "...", "reason": "..."}
   ],
   "overall_assessment": "..."
 }
@@ -462,7 +455,7 @@ Antworte als JSON:
 
 ## 4. Architektur-Empfehlung fuer FeedbackAI
 
-### Gewaehlter Ansatz: TNT-LLM + Clio + GoalEx Hybrid
+### Gewaehlter Ansatz: TNT-LLM + Clio Hybrid
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -510,77 +503,25 @@ Antworte als JSON:
 | Goal-Driven | GoalEx PAS Pattern | `research_goal` steuert Clustering-Perspektive |
 | Self-Correction | Few-Shot Clustering Post-Correction | LangGraph Loop mit max 3 Iterationen |
 | Erklaerbarkeit | Clio Facet Pattern | Cluster-Summaries + Reasoning pro Zuordnung |
-| Skalierbarkeit | Tiered LLM via OpenRouter | Extraction guenstig, Clustering intelligent |
-| Produktions-Beweis | Clio (Millionen Conversations), Anthropic Interviewer | Anthropic nutzt diesen Ansatz selbst |
-
-### OpenRouter Model-Konfiguration
-
-User kann pro Aufgabe den Model-Slug konfigurieren:
-
-| Aufgabe | Empfohlenes Default-Modell | Warum |
-|---------|---------------------------|-------|
-| Interviewer | `anthropic/claude-sonnet-4` | Empathie, Gespraechsfuehrung |
-| Fact Extraction | `anthropic/claude-haiku-4` | Schnell, guenstig, strukturierte Extraktion |
-| Clustering / Taxonomy | `anthropic/claude-sonnet-4` | Semantisches Verstaendnis, Goal-Alignment |
-| Self-Correction | `anthropic/claude-sonnet-4` | Reasoning, Qualitaetsbewertung |
-| Summary Generation | `anthropic/claude-haiku-4` | Zusammenfassung ist einfach |
+| Skalierbarkeit | Tiered LLM (Haiku/Sonnet via OpenRouter) | Extraction guenstig, Clustering intelligent |
+| Produktions-Beweis | Clio (Millionen Conversations) | Anthropic nutzt diesen Ansatz selbst |
 
 ### Kosten-Schaetzung (100 Interviews, ~500 Facts)
 
-| Schritt | Default Model | Calls | ~Tokens/Call | ~Kosten |
-|---------|---------------|-------|-------------|---------|
+| Schritt | Model | Calls | ~Tokens/Call | Kosten |
+|---------|-------|-------|-------------|--------|
 | Fact Extraction | Haiku | 100 | ~2.000 | ~$0.05 |
 | Initial Taxonomy | Sonnet | 1 | ~5.000 | ~$0.08 |
 | Fact Assignment | Sonnet | 100 | ~3.000 | ~$4.50 |
 | Self-Correction | Sonnet | 3 | ~5.000 | ~$0.23 |
-| Summaries | Haiku | ~15 | ~3.000 | ~$0.05 |
-| **Total** | | **~219** | | **~$4.91** |
+| Summaries | Sonnet | ~15 | ~3.000 | ~$0.68 |
+| **Total** | | **~219** | | **~$5.54** |
 
-*Preise variieren je nach OpenRouter-Model-Slug. User konfiguriert selbst.*
-
----
-
-## 5. Inkrementelles Re-Clustering mit Merge/Split-Vorschlaegen
-
-### Entscheidung: Hybrid mit Suggestions
-
-Basierend auf User-Feedback: Inkrementell als Default + LLM-gesteuerte Merge/Split-Vorschlaege + User-Approval + manueller Full-Re-Cluster Button.
-
-### Inkrementeller Flow
-
-```
-Neues Interview abgeschlossen
-    |
-    v
-[1] Fact Extraction → Neue Facts
-    |
-    v
-[2] LLM ordnet Facts bestehenden Clustern zu
-    ODER schlaegt neue Cluster vor
-    |
-    v
-[3] Wenn neuer Cluster: LLM prueft Aehnlichkeit zu bestehenden
-    → Auto-Merge-Vorschlag (User entscheidet)
-    |
-    v
-[4] Wenn Cluster > N Facts: LLM prueft auf Sub-Themen
-    → Auto-Split-Vorschlag (User entscheidet)
-    |
-    v
-[5] Vorschlaege als Suggestions im Dashboard
-    User bestaetigt oder verwirft
-```
-
-### Full Re-Cluster (manueller Trigger)
-
-- Button "Neu berechnen" im Dashboard
-- Loescht alle Cluster-Zuordnungen
-- Fuehrt komplette TNT-LLM Pipeline neu aus
-- Sinnvoll nach vielen manuellen Aenderungen oder bei >50 neuen Interviews
+*Bei OpenRouter-Preisen, variiert je nach Modell-Slug.*
 
 ---
 
-## 6. Quellen-Verzeichnis
+## 5. Quellen-Verzeichnis
 
 ### Akademische Papers
 
