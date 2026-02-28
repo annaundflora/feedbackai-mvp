@@ -36,14 +36,14 @@
 | LLM-basiertes Clustering: TNT-LLM-inspirierte 2-Phasen Taxonomie-Generierung + Zuweisung |
 | Agentic Self-Correction: LangGraph-Loop mit Validierung der Cluster-Qualitaet |
 | Automatisches Clustering nach jedem abgeschlossenen Interview |
-| Automatisches Re-Clustering nach Taxonomy-Aenderungen |
+| Automatische Summary-Regenerierung nach Taxonomy-Aenderungen (Merge/Split) |
 | Dashboard: Card-basierte Cluster-Uebersicht mit Zaehlern |
 | Dashboard: Cluster-Zusammenfassungen (LLM-generiert) |
 | Dashboard: Drill-Down zu Facts pro Cluster mit Quell-Interview |
 | Dashboard: Zitate/Belege aus Original-Transcripts |
 | Dashboard: Taxonomy bearbeiten (Cluster umbenennen, mergen, splitten) |
 | Live-Updates im Dashboard via SSE |
-| Supabase Auth fuer Dashboard-Zugang |
+| JWT Auth fuer Dashboard-Zugang (Email/Passwort, python-jose + passlib) |
 | Dashboard als neuer `dashboard/` Ordner im bestehenden Repo |
 
 | In Scope (neu: Research-Ergebnisse) |
@@ -78,7 +78,7 @@
 - `InterviewGraph` LangGraph StateGraph mit MemorySaver + SSE-Streaming — Pattern wird fuer Clustering-Graph wiederverwendet
 - SSE-Streaming Pattern (`sse_starlette`) fuer Real-Time Delivery — wird fuer Dashboard Live-Updates wiederverwendet
 - OpenRouter als LLM-Gateway — wird fuer Clustering-LLM-Calls wiederverwendet
-- Supabase/PostgreSQL als Datenbank — wird um neue Tabellen erweitert
+- PostgreSQL/SQLAlchemy async als Datenbank — wird um neue Tabellen erweitert
 
 ---
 
@@ -155,9 +155,9 @@
 
 1. User klickt auf Cluster-Card → Kontextmenue: "Umbenennen", "Mergen mit...", "Splitten"
 2. **Umbenennen:** User gibt neuen Namen ein → System speichert
-3. **Mergen:** User waehlt zweiten Cluster → System kombiniert Facts → Re-Clustering laeuft automatisch
-4. **Splitten:** User bestaetigt → LLM teilt Cluster in Sub-Cluster → Re-Clustering laeuft automatisch
-5. Nach jeder Aenderung: Automatisches Re-Clustering der betroffenen Facts
+3. **Mergen:** User waehlt zweiten Cluster → System kombiniert Facts → Cluster-Summary wird automatisch regeneriert
+4. **Splitten (2-Schritt-Verfahren):** User klickt "Split" → LLM generiert Preview der vorgeschlagenen Sub-Cluster (Name, Fact-Anzahl, komplette Fact-Auflistung pro Sub-Cluster) → User prueft Preview und bestaetigt oder bricht ab → Bei Bestaetigung: Facts werden aufgeteilt, Cluster-Summaries werden automatisch generiert
+5. Nach jeder Aenderung: Automatische Summary-Regenerierung der betroffenen Cluster (kein Re-Clustering der Facts)
 
 **Error Paths:**
 - LLM-Timeout bei Fact Extraction → Retry (max 3x), danach Status "extraction_failed" fuer dieses Interview
@@ -177,7 +177,7 @@
 **Layout:**
 - Header: App-Name "FeedbackAI Insights" + User-Avatar/Logout
 - Toolbar: "Neues Projekt" Button
-- Grid: Projekt-Cards (Name, Interview-Anzahl, Cluster-Anzahl, letztes Update)
+- Grid: Projekt-Cards (Name, Interview-Anzahl, Cluster-Anzahl, letztes Update als relative Zeitangabe z.B. "Updated 2h ago")
 - Empty State: Illustration + "Erstes Projekt anlegen" CTA
 
 ### Screen: Projekt-Dashboard (Insights Tab)
@@ -188,7 +188,8 @@
 **Layout:**
 - Header: Projekt-Name, Research-Ziel (Subtitle), Tabs: "Insights" | "Interviews" | "Einstellungen"
 - Status-Bar: "N Interviews | M Facts | K Cluster" + optional Progress-Indicator
-- Card-Grid: Cluster-Cards sortiert nach Fact-Anzahl (absteigend)
+- Back-Navigation: "< Projects" Pfeil im Header auf allen Projekt-Detail-Screens
+- Card-Grid: Cluster-Cards in 2-Spalten Grid (responsive, single-column auf mobil), sortiert nach Fact-Anzahl (absteigend)
   - Jede Card: Cluster-Name, Fact-Anzahl Badge, Interview-Anzahl Badge, Zusammenfassung (2-3 Zeilen Vorschau), Kontextmenue-Icon
 - Unassigned-Bereich: Facts ohne Cluster (falls vorhanden)
 
@@ -200,7 +201,7 @@
 **Layout:**
 - Header: Cluster-Name (editierbar), "Zurueck" Button, Aktionen (Mergen, Splitten)
 - Zusammenfassung: Vollstaendiger LLM-generierter Text
-- Facts-Liste: Nummerierte atomare Facts, jeweils mit:
+- Facts-Liste: Sequentiell nummerierte atomare Facts (1, 2, 3...), jeweils mit:
   - Fact-Text
   - Quell-Interview (Link/Badge: "Interview #7")
   - Confidence-Score (optional)
@@ -213,6 +214,7 @@
 
 **Layout:**
 - Toolbar: "Interviews zuordnen" Button, Filter (Status, Datum)
+- Interview-Zuordnung via Modal-Overlay mit Checkbox-Liste (ID, Datum, Summary-Vorschau). Multi-Select + "Zuordnen" Button
 - Tabelle: Interview-Liste (ID, Datum, Summary-Vorschau, Facts-Anzahl, Clustering-Status)
 - Status-Badges: "analysiert", "ausstehend", "fehlgeschlagen"
 
@@ -223,8 +225,9 @@
 
 **Layout:**
 - Formular: Projektname, Research-Ziel, Prompt-Kontext (Textarea), Fact-Extraction-Quelle (Dropdown: Summary/Transcript)
+- Zwei separate "Save Changes" Buttons: einer fuer General-Settings, einer fuer Model-Configuration
 - Model-Konfiguration (OpenRouter): Model-Slug pro Aufgabe (Interviewer, Fact Extraction, Clustering, Summary)
-- Danger Zone: "Projekt loeschen" Button mit Bestaetigung
+- Danger Zone: "Projekt loeschen" Button mit Bestaetigung (User muss Projektnamen eintippen)
 
 ---
 
@@ -239,7 +242,7 @@
 | `cluster_context_menu` | Dropdown | Cluster-Card | `closed`, `open` | Optionen: Umbenennen, Mergen, Splitten |
 | `taxonomy_editor_rename` | Inline Input | Cluster-Card/Detail | `display`, `editing`, `saving` | Enter → speichert, Escape → abbrechen |
 | `merge_dialog` | Modal | Cluster-Card | `closed`, `open`, `merging` | Cluster-Auswahl → Bestaetigung → Merge |
-| `split_confirm` | Modal | Cluster-Card | `closed`, `open`, `splitting` | Bestaetigung → LLM-Split → Re-Cluster |
+| `split_confirm` | Modal | Cluster-Card | `closed`, `open`, `splitting` | Bestaetigung → LLM-Split → Summary-Regenerierung |
 | `fact_item` | List Item | Cluster-Detail | `default`, `highlighted` | Zeigt Fact-Text + Interview-Badge |
 | `quote_item` | Blockquote | Cluster-Detail | `default`, `expanded` | Zeigt Originalzitat + Interview-Referenz |
 | `progress_bar` | Status Bar | Insights Tab | `hidden`, `active`, `complete` | Zeigt Clustering-Fortschritt bei Batch |
@@ -250,6 +253,7 @@
 | `merge_suggestion` | Banner/Card | Insights Tab | `hidden`, `visible`, `accepted`, `dismissed` | LLM schlaegt Merge vor, User akzeptiert oder verwirft |
 | `split_suggestion` | Banner/Card | Insights Tab | `hidden`, `visible`, `accepted`, `dismissed` | LLM schlaegt Split vor, User akzeptiert oder verwirft |
 | `recluster_btn` | Button | Insights Tab Toolbar | `default`, `loading`, `disabled` | Manueller Full Re-Cluster Trigger |
+| `recluster_confirm` | Modal | Insights Tab | `closed`, `open`, `recalculating` | Warnung + Impact-Summary vor Full Re-Cluster |
 | `model_config_form` | Form | Einstellungen Tab | `pristine`, `dirty`, `saving` | OpenRouter Model-Slug pro Aufgabe konfigurieren |
 
 ---
@@ -264,12 +268,12 @@
 | `project_empty` | Projekt ohne Interviews, Empty State | Interviews zuordnen, Einstellungen bearbeiten |
 | `project_collecting` | Interviews zugeordnet, Clustering laeuft | Dashboard ansehen (mit Progress), Interviews zuordnen |
 | `project_ready` | Alle Interviews analysiert, Cluster sichtbar | Dashboard ansehen, Drill-Down, Taxonomy bearbeiten |
-| `project_updating` | Re-Clustering laeuft (nach Taxonomy-Edit oder neuem Interview) | Dashboard ansehen (mit Update-Indicator), Read-Only fuer Taxonomy |
+| `project_updating` | Clustering (neues Interview) oder Summary-Regenerierung (nach Taxonomy-Edit) laeuft | Dashboard ansehen (mit Update-Indicator), Read-Only fuer Taxonomy |
 | `cluster_detail` | Drill-Down in einen Cluster | Facts ansehen, Zitate ansehen, Umbenennen, Zurueck |
 | `extraction_running` | Facts werden aus einem Interview extrahiert | Warten (Progress im Dashboard) |
-| `extraction_failed` | Fact Extraction fehlgeschlagen | Retry, Interview ueberspringen |
+| `extraction_failed` | Fact Extraction fehlgeschlagen. Error-Badge am Interview in Interviews-Tab mit Retry-Button. | Retry (Retry-Button in Interview-Zeile), Interview ueberspringen (entfernt Interview aus Pipeline, Facts bleiben erhalten) |
 | `clustering_running` | Facts werden Clustern zugeordnet | Warten (Progress im Dashboard) |
-| `clustering_failed` | Clustering fehlgeschlagen | Retry |
+| `clustering_failed` | Clustering fehlgeschlagen. Error-Banner im Insights-Tab zeigt Anzahl unzugeordneter Facts + Retry-Option. | Retry (Banner-Button im Insights-Tab), Facts manuell zuordnen |
 
 ### Transitions
 
@@ -282,8 +286,8 @@
 | `project_collecting` | Neues Interview kommt rein | Zaehler aktualisiert, Progress aktualisiert | `project_collecting` | -- |
 | `project_ready` | Cluster-Card klicken | Drill-Down Panel oeffnet sich | `cluster_detail` | -- |
 | `project_ready` | Neues Interview kommt rein | Update-Indicator auf betroffenen Cluster-Cards | `project_updating` | -- |
-| `project_ready` | Taxonomy bearbeiten (Merge/Split/Rename) | Re-Clustering Progress | `project_updating` | Rename erfordert keinen Re-Cluster |
-| `project_updating` | Re-Clustering abgeschlossen | Cards aktualisieren sich, Update-Indicator verschwindet | `project_ready` | -- |
+| `project_ready` | Taxonomy bearbeiten (Merge/Split/Rename) | Summary-Regenerierung Progress | `project_updating` | Rename erfordert keine Summary-Regenerierung |
+| `project_updating` | Summary-Regenerierung/Clustering abgeschlossen | Cards aktualisieren sich, Update-Indicator verschwindet | `project_ready` | -- |
 | `cluster_detail` | "Zurueck" klicken | Drill-Down schliesst | `project_ready` | -- |
 | `extraction_running` | Extraction erfolgreich | Facts erscheinen im Cluster | `clustering_running` | -- |
 | `extraction_running` | Extraction fehlgeschlagen (3x Retry) | Error-Badge am Interview | `extraction_failed` | Max 3 Retries |
@@ -297,17 +301,18 @@
 
 - Jedes Projekt hat genau ein Research-Ziel und einen Prompt-Kontext
 - Fact-Extraction-Quelle (Summary oder Transcript) ist pro Projekt konfigurierbar
+- Fact-Extraction-Quelle wird gesperrt sobald erste Facts extrahiert wurden. Aenderung nur ueber "Reset & Change Source" Flow moeglich, der explizit darauf hinweist dass bestehende Facts mit der alten Quelle extrahiert wurden und bei Bedarf ein Full Re-Extract ausgeloest werden kann
 - Ein Interview kann nur einem Projekt zugeordnet werden
 - Facts werden aus dem Interview-Text extrahiert; ein Interview kann mehrere Facts liefern
 - Ein Fact gehoert zu genau einem Cluster (oder "unassigned")
 - Cluster-Zusammenfassungen werden automatisch (re-)generiert wenn sich der Cluster-Inhalt aendert
 - Cluster-Taxonomie waechst emergent — LLM entscheidet basierend auf Daten, nicht vordefinierte Kategorien
-- Bei Merge: Alle Facts des Quell-Clusters wandern zum Ziel-Cluster, Quell-Cluster wird geloescht
+- Bei Merge: Alle Facts des Quell-Clusters wandern zum Ziel-Cluster, Quell-Cluster wird geloescht. Nach erfolgreichem Merge erscheint Undo-Toast ("Clusters merged. [Undo - 30s]") der den Merge innerhalb von 30 Sekunden rueckgaengig machen kann
 - Bei Split: LLM teilt Facts des Clusters in 2+ Sub-Cluster auf
 - Rename loest KEIN Re-Clustering aus
 - Maximale Retry-Anzahl fuer LLM-Calls: 3 (Extraction + Clustering)
 - Clustering-Pipeline blockiert nicht die Interview-Ausfuehrung (async, Background-Task)
-- Dashboard erfordert Supabase Auth (Login)
+- Dashboard erfordert JWT Auth (Email/Passwort Login, python-jose + passlib)
 
 ### Re-Clustering Strategie (Entscheidung: Hybrid mit Suggestions)
 
@@ -335,7 +340,7 @@
 - User kann Cluster umbenennen (inline edit)
 - User kann Cluster mergen (zwei auswaehlen → kombinieren)
 - User kann Cluster splitten (LLM teilt in Sub-Cluster)
-- User kann Interviews zwischen Clustern verschieben (Drag & Drop oder Kontextmenue)
+- User kann Facts zwischen Clustern verschieben (Kontextmenue pro Fact mit "Move to [Cluster]..." und "Mark as unassigned", Checkbox-Selektion fuer Bulk Move)
 - Alle manuellen Aenderungen sind persistent
 
 ---
@@ -357,7 +362,7 @@
 | `model_summary` | No | String, OpenRouter Model-Slug | Default: "anthropic/claude-haiku-4" |
 | `created_at` | Yes | Timestamp, auto | -- |
 | `updated_at` | Yes | Timestamp, auto | -- |
-| `user_id` | Yes | UUID, Supabase Auth | Projekt-Ersteller |
+| `user_id` | Yes | UUID, JWT Auth (aus Token) | Projekt-Ersteller |
 
 ### Cluster (Taxonomy)
 
@@ -430,9 +435,9 @@ Slice 8 (Auth + Polish)
 | 3 | Clustering Pipeline + Agent | LangGraph Clustering-Agent: Taxonomie generieren, Facts zuordnen, Self-Correction Loop, Cluster-Zusammenfassungen | Test: Facts vorhanden → Cluster entstehen, Zuordnungen sinnvoll, Zusammenfassungen generiert | Slice 2 |
 | 4 | Dashboard: Projekt-Liste + Cluster-Uebersicht | Next.js App, Projekt-Liste, Cluster-Card-Grid, Zaehler, Zusammenfassungs-Vorschau | E2E: Dashboard oeffnen → Projekte sehen → Cluster-Cards sehen | Slice 3 |
 | 5 | Dashboard: Drill-Down + Zitate | Cluster-Detail mit Facts-Liste, Interview-Referenzen, Original-Zitate aus Transcripts | E2E: Cluster klicken → Facts sehen → Zitate sehen | Slice 4 |
-| 6 | Taxonomy-Editing + Re-Clustering | Cluster umbenennen, mergen, splitten; automatisches Re-Clustering nach Merge/Split | Test: Cluster mergen → Facts kombiniert, neue Zusammenfassung; Cluster splitten → Sub-Cluster entstehen | Slice 5 |
+| 6 | Taxonomy-Editing + Summary-Regen | Cluster umbenennen, mergen, splitten; automatische Summary-Regenerierung nach Merge/Split | Test: Cluster mergen → Facts kombiniert, neue Zusammenfassung; Cluster splitten → Sub-Cluster entstehen | Slice 5 |
 | 7 | Live-Updates via SSE | Dashboard SSE-Verbindung, Echtzeit-Updates bei neuen Facts/Clustern, Progress-Indicator | Test: Interview abschliessen → Dashboard aktualisiert sich automatisch ohne Reload | Slice 4 |
-| 8 | Auth + Polish | Supabase Auth Integration, Login-Screen, geschuetzte Routes, Error Handling, Loading States | Test: Unautorisierter Zugriff blockiert, Login funktioniert, Fehler werden angezeigt | Slice 7 |
+| 8 | Auth + Polish | JWT Auth Integration (python-jose + passlib), Login-Screen, geschuetzte Routes, Error Handling, Loading States | Test: Unautorisierter Zugriff blockiert, Login funktioniert, Fehler werden angezeigt | Slice 7 |
 
 ### Recommended Order
 
@@ -625,8 +630,8 @@ START → extract_facts → assign_to_clusters → validate_quality
 | 12 | Wo lebt das Dashboard? | Im bestehenden feedbackai-mvp Repo als neuer Ordner. |
 | 13 | Wie soll die Cluster-Uebersicht im Dashboard aussehen? | Card-based: Cluster-Cards mit Name, Zaehler, Zusammenfassung. Klick → Drill-Down. |
 | 14 | Welche Projekt-Management-Funktionen gehoeren zum MVP-Scope? | Alle: Projekt erstellen, Interview-Zuordnung, Cluster-Dashboard, Taxonomy bearbeiten. |
-| 15 | Soll nach Taxonomy-Bearbeitung automatisch re-clustered werden? | Ja, automatisch. |
-| 16 | Wie wird das Dashboard geschuetzt? | Supabase Auth (Email/Passwort). |
+| 15 | Soll nach Taxonomy-Bearbeitung automatisch re-clustered werden? | Nur Summary-Regenerierung. Facts werden bei Merge/Split direkt verschoben, Summaries automatisch neu generiert. Kein erneuter Clustering-Durchlauf. |
+| 16 | Wie wird das Dashboard geschuetzt? | JWT Auth (Email/Passwort, python-jose + passlib). Codebase hat Supabase entfernt (commit 9e71eca), JWT_SECRET bereits konfiguriert. |
 | 17 | Wie tief soll die Discovery gehen? | Detailliert (alle Sections + Wireframes + Edge Cases). |
 | 18 | Wieviele Interviews pro Projekt erwartet? | Gross (100+). Beeinflusst Pipeline: Batching + inkrementelles Clustering noetig. |
 | 19 | Sollen Clustering-Ergebnisse in Echtzeit im Dashboard erscheinen? | Ja, Live-Updates via SSE. |
