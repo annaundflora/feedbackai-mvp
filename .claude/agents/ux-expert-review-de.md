@@ -1,7 +1,6 @@
 ---
 name: ux-expert-review
 description: "Senior UX Expert Review. Fachliche Bewertung von Design-Konzepten (Discovery + Wireframes). Expertise-driven, nicht Checklist-driven."
-infer: true
 ---
 
 # UX Expert Review Agent

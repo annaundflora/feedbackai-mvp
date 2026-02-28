@@ -1,10 +1,10 @@
 ---
-description: "Erstellt Wireframes + automatische Gate 0 Compliance (max 3 Retries). Basiert auf Anthropic Fresh Context Pattern."
+description: "Erstellt Wireframes + UX Expert Review + automatische Gate 0 Compliance (max 3 Retries). Basiert auf Anthropic Fresh Context Pattern."
 ---
 
-# Wireframe mit Gate 0 Compliance
+# Wireframe mit UX Expert Review + Gate 0 Compliance
 
-Du führst den **Wireframe-Agent** mit automatischer **Gate 0 Compliance** aus.
+Du führst den **Wireframe-Agent** mit automatischem **UX Expert Review** und **Gate 0 Compliance** aus.
 
 **Input:** $ARGUMENTS
 
@@ -30,13 +30,96 @@ Du führst den **Wireframe-Agent** mit automatischer **Gate 0 Compliance** aus.
 
 ---
 
-## Phase 3: Gate 0 Compliance Loop
+## Phase 3: UX Expert Review
+
+Nach Wireframe-Erstellung, VOR Gate 0 Compliance:
+
+```
+spec_path = [ermittelter Spec-Ordner]
+
+# 1. UX Expert Review mit FRISCHEM CONTEXT
+ux_result = Task(
+  subagent_type: "ux-expert-review",
+  prompt: "Führe einen UX Expert Review durch für: {spec_path}
+
+  Lies:
+  - {spec_path}/discovery.md
+  - {spec_path}/wireframes.md
+
+  Erstelle: {spec_path}/checks/ux-expert-review.md
+
+  WICHTIG: Du bist READ-ONLY! Editiere KEINE Discovery/Wireframe-Dateien.
+  Erstelle NUR den Review Report.
+
+  Returne am Ende EXAKT dieses Format:
+  VERDICT: APPROVED oder CHANGES_REQUESTED
+  FINDINGS: [Liste aller Findings mit ID, Titel, Severity]"
+)
+
+# 2. Findings interaktiv präsentieren
+IF ux_result enthält Findings:
+
+  FOR each finding IN findings:
+    # Zeige Finding und frage PM
+    AskUserQuestion(
+      question: "UX Finding {finding.id}: {finding.title}
+        Severity: {finding.severity}
+        Problem: {finding.problem}
+        Empfehlung: {finding.recommendation}
+
+        Wie möchtest du vorgehen?",
+      options: [
+        {label: "Umsetzen", description: "Finding jetzt in Wireframe/Discovery einarbeiten"},
+        {label: "Merken für später", description: "Finding akzeptieren, aber erst in späterem Schritt umsetzen"},
+        {label: "Ablehnen", description: "Finding ist nicht relevant oder bewusste Design-Entscheidung"}
+      ]
+    )
+
+  # 3. PM-Review: Eigene Anmerkungen?
+  AskUserQuestion(
+    question: "Hast du eigene UX-Anmerkungen oder Ergänzungen die noch eingearbeitet werden sollen?",
+    options: [
+      {label: "Nein, weiter zu Gate 0", description: "Keine weiteren Anmerkungen"},
+      {label: "Ja, ich habe Anmerkungen", description: "Eigene UX-Punkte ergänzen"}
+    ]
+  )
+
+  # Falls PM Anmerkungen hat: Diese ebenfalls umsetzen
+
+  # 4. Akzeptierte Findings umsetzen
+  FOR each accepted_finding (wo Antwort == "Umsetzen"):
+    # WICHTIG: Read vor Edit!
+    Read({spec_path}/wireframes.md)
+    Read({spec_path}/discovery.md)
+
+    # Empfehlung des Findings in wireframes.md und/oder discovery.md einarbeiten
+    # Je nach "Betrifft" im Finding: Wireframe-Änderung und/oder Discovery-Änderung
+
+  OUTPUT an User:
+  "✅ **UX Expert Review abgeschlossen**
+
+  - Review Report: {spec_path}/checks/ux-expert-review.md
+  - {count_umsetzen} Findings umgesetzt
+  - {count_merken} Findings für später gemerkt
+  - {count_ablehnen} Findings abgelehnt
+
+  → Weiter zu Gate 0 Compliance..."
+
+ELSE:
+  OUTPUT an User:
+  "✅ **UX Expert Review: Keine Findings**
+  → Weiter zu Gate 0 Compliance..."
+```
+
+---
+
+## Phase 4: Gate 0 Compliance Loop
 
 Nach dem Erstellen/Fixen von wireframes.md:
 
 ```
 retry_count = 0
-MAX_RETRIES = 3
+MAX_RETRIES = 9
 spec_path = [ermittelter Spec-Ordner]
 
 LOOP:
@@ -141,8 +224,10 @@ Nach erfolgreichem Durchlauf:
 ```
 {spec_path}/
 ├── discovery.md                        # Input (existiert)
-├── wireframes.md                       # NEU erstellt
-└── compliance-discovery-wireframe.md   # NEU erstellt (Gate 0)
+├── wireframes.md                       # NEU erstellt (Phase 2)
+├── checks/
+│   └── ux-expert-review.md             # NEU erstellt (Phase 3)
+└── compliance-discovery-wireframe.md   # NEU erstellt (Phase 4, Gate 0)
 ```
 
 ---
