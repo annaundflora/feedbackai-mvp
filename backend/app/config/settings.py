@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "FeedbackAI"
 
+    # Clustering Pipeline (Slice 2)
+    clustering_max_retries: int = 3
+    clustering_llm_timeout_seconds: int = 120
+    clustering_batch_size: int = 20
+    clustering_pipeline_timeout_seconds: int = 600
+
     @property
     def async_database_url(self) -> str:
         """Konvertiert postgresql:// zu postgresql+asyncpg:// fuer async Engine."""

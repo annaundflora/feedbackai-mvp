@@ -1,11 +1,9 @@
-"""FastAPI Router fuer Projekt-CRUD und Interview-Zuordnung.
+"""FastAPI Router fuer Projekt-CRUD, Interview-Zuordnung und Fact Extraction Retry.
 
-Implementiert 10 Endpunkte:
+Implementiert 11 Endpunkte:
   - 7 Projekt-CRUD Endpunkte
   - 3 Interview-Assignment Endpunkte
-
-DEFERRED zu Slice 2:
-  - POST /api/projects/{id}/interviews/{iid}/retry
+  - 1 Retry-Endpunkt (Slice 2)
 """
 from fastapi import APIRouter, Depends, Query, Request, Response
 
@@ -46,7 +44,19 @@ def get_assignment_service(request: Request) -> InterviewAssignmentService:
     settings: Settings = request.app.state.settings
     session_factory = get_session_factory(settings)
     repo = InterviewAssignmentRepository(session_factory=session_factory)
-    return InterviewAssignmentService(repo=repo)
+
+    # Slice 2: FactExtractionService fuer retry()
+    fact_extraction_svc = getattr(request.app.state, "fact_extraction_service", None)
+
+    # Slice 2: InterviewRepository fuer retry() response details
+    from app.interview.repository import InterviewRepository
+    interview_repo = InterviewRepository(session_factory=session_factory)
+
+    return InterviewAssignmentService(
+        repo=repo,
+        interview_repository=interview_repo,
+        fact_extraction_service=fact_extraction_svc,
+    )
 
 
 # ============================================================
@@ -226,8 +236,30 @@ async def assign_interviews(
 
 
 # ============================================================
-# DEFERRED ENDPOINTS (Slice 2)
+# Fact Extraction Retry Endpoint (Slice 2)
 # ============================================================
-# POST /api/projects/{id}/interviews/{iid}/retry
-# -- Benoetigt LLM-Fact-Extraction-Pipeline (Slice 2)
-# -- Implementiert in: slice-02-fact-extraction-pipeline.md
+
+
+@router.post(
+    "/projects/{project_id}/interviews/{interview_id}/retry",
+    response_model=InterviewAssignment,
+)
+async def retry_interview_extraction(
+    project_id: str,
+    interview_id: str,
+    service: InterviewAssignmentService = Depends(get_assignment_service),
+) -> InterviewAssignment:
+    """Setzt extraction_status auf 'pending' und startet Extraction-Task neu.
+
+    POST /api/projects/{id}/interviews/{iid}/retry
+
+    Nur erlaubt wenn aktueller Status == 'failed'.
+
+    Response 200: InterviewAssignment mit extraction_status='pending'
+    Response 404: Interview nicht in Projekt
+    Response 409: Status ist nicht 'failed'
+    """
+    return await service.retry(
+        project_id=project_id,
+        interview_id=interview_id,
+    )

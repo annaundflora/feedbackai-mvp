@@ -155,11 +155,15 @@ class InterviewAssignmentRepository:
     async def find_by_interview_id(self, interview_id: str) -> dict | None:
         """SELECT * FROM project_interviews WHERE interview_id = :interview_id.
 
+        Wird von InterviewService.end() aufgerufen um zu pruefen ob Interview
+        einem Projekt zugeordnet ist.
+
         Args:
             interview_id: UUID des Interviews
 
         Returns:
-            dict mit Zuordnungsdaten oder None wenn nicht gefunden
+            dict mit {project_id, interview_id, extraction_status, clustering_status}
+            oder None wenn Interview keinem Projekt zugeordnet.
         """
         async with self._session_factory() as session:
             result = await session.execute(
@@ -171,3 +175,82 @@ class InterviewAssignmentRepository:
             )
             row = result.mappings().first()
             return dict(row) if row else None
+
+    async def find_by_project_and_interview(
+        self, project_id: str, interview_id: str
+    ) -> dict | None:
+        """SELECT * FROM project_interviews WHERE project_id = ... AND interview_id = ...
+
+        Fuer Retry-Endpoint: Prueft ob Interview in spezifischem Projekt.
+
+        Args:
+            project_id: UUID des Projekts als String.
+            interview_id: UUID des Interviews als String.
+
+        Returns:
+            dict mit Zuordnungsdaten oder None wenn nicht gefunden.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT * FROM project_interviews "
+                    "WHERE project_id = :project_id AND interview_id = :interview_id"
+                ),
+                {
+                    "project_id": project_id,
+                    "interview_id": interview_id,
+                },
+            )
+            row = result.mappings().first()
+            return dict(row) if row else None
+
+    async def update_extraction_status(
+        self,
+        interview_id: str,
+        extraction_status: str,
+        clustering_status: str | None = None,
+    ) -> dict:
+        """Aktualisiert extraction_status (und optional clustering_status).
+
+        Status-Uebergaenge: pending -> running -> completed | failed
+
+        Args:
+            interview_id: UUID als String.
+            extraction_status: Neuer Status ('pending' | 'running' | 'completed' | 'failed').
+            clustering_status: Falls nicht None, wird clustering_status ebenfalls gesetzt.
+
+        Returns:
+            Aktualisierter DB-Row als Dict.
+        """
+        async with self._session_factory() as session:
+            if clustering_status is not None:
+                result = await session.execute(
+                    text(
+                        "UPDATE project_interviews "
+                        "SET extraction_status = :extraction_status, "
+                        "    clustering_status = :clustering_status "
+                        "WHERE interview_id = :interview_id "
+                        "RETURNING *"
+                    ),
+                    {
+                        "interview_id": interview_id,
+                        "extraction_status": extraction_status,
+                        "clustering_status": clustering_status,
+                    },
+                )
+            else:
+                result = await session.execute(
+                    text(
+                        "UPDATE project_interviews "
+                        "SET extraction_status = :extraction_status "
+                        "WHERE interview_id = :interview_id "
+                        "RETURNING *"
+                    ),
+                    {
+                        "interview_id": interview_id,
+                        "extraction_status": extraction_status,
+                    },
+                )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else {}

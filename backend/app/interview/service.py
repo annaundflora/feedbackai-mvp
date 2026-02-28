@@ -1,10 +1,11 @@
 """InterviewService -- orchestrates interview lifecycle."""
 
+import asyncio
 import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 
@@ -40,11 +41,15 @@ class InterviewService:
         repository: InterviewRepository | None = None,
         summary_service: SummaryService | None = None,
         timeout_manager: TimeoutManager | None = None,
+        fact_extraction_service: Any | None = None,   # Slice 2: Optional FactExtractionService
+        assignment_repository: Any | None = None,     # Slice 2: Optional InterviewAssignmentRepository
     ) -> None:
         self._graph = graph
         self._repository = repository
         self._summary_service = summary_service
         self._timeout_manager = timeout_manager
+        self._fact_extraction_service = fact_extraction_service
+        self._assignment_repository = assignment_repository
         self._sessions: dict[str, dict] = {}
 
     async def start(self, anonymous_id: str) -> AsyncGenerator[str, None]:
@@ -202,6 +207,25 @@ class InterviewService:
                 logger.error(f"DB complete_session failed for {session_id}: {e}")
 
         self._sessions[session_id]["status"] = "completed"
+
+        # Slice 2: Clustering-Trigger (fire-and-forget)
+        if self._fact_extraction_service is not None and self._assignment_repository is not None:
+            try:
+                assignment = await self._assignment_repository.find_by_interview_id(session_id)
+                if assignment:
+                    asyncio.create_task(
+                        self._fact_extraction_service.process_interview(
+                            project_id=str(assignment["project_id"]),
+                            interview_id=session_id,
+                        )
+                    )
+                    logger.info(
+                        f"Fact extraction triggered for interview {session_id} "
+                        f"in project {assignment['project_id']}"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to trigger fact extraction for {session_id}: {e}")
+                # Kein Re-raise: Interview-Ende darf nicht durch Clustering-Trigger blockiert werden
 
         return {
             "summary": summary,
