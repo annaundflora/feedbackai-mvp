@@ -1,5 +1,5 @@
 // IMPORTANT: Tailwind v4 syntax — NOT v3 (no require('tailwindcss') or plugins: [tailwindcss()])
-export default {
+module.exports = {
   plugins: {
     '@tailwindcss/postcss': {},
   },
