@@ -214,6 +214,124 @@ class FactRepository:
 
         logger.info(f"Updated cluster assignments for {len(assignments)} facts")
 
+    async def get_by_cluster(
+        self,
+        cluster_id: str,
+        project_id: str,
+    ) -> list[dict]:
+        """Laedt alle Facts eines bestimmten Clusters.
+
+        Args:
+            cluster_id: UUID als String.
+            project_id: UUID als String (Sicherheitspruefung).
+
+        Returns:
+            Liste von Fact-Dicts sortiert nach created_at ASC.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT f.id, f.project_id, f.interview_id, f.cluster_id, "
+                    "f.content, f.quote, f.confidence, f.created_at, "
+                    "m.created_at AS interview_date "
+                    "FROM facts f "
+                    "LEFT JOIN mvp_interviews m ON m.session_id = f.interview_id "
+                    "WHERE f.cluster_id = :cluster_id AND f.project_id = :project_id "
+                    "ORDER BY f.created_at ASC"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                },
+            )
+            rows = result.mappings().all()
+            return [dict(row) for row in rows]
+
+    async def move_bulk(
+        self,
+        fact_ids: list[str],
+        target_cluster_id: str | None,
+        project_id: str,
+    ) -> None:
+        """Verschiebt mehrere Facts zu einem Cluster (oder auf unassigned=NULL).
+
+        Args:
+            fact_ids: Liste von Fact-UUIDs.
+            target_cluster_id: Ziel-Cluster-UUID oder None (unassigned).
+            project_id: Projekt-UUID fuer Sicherheitspruefung.
+        """
+        if not fact_ids:
+            return
+
+        async with self._session_factory() as session:
+            for fact_id in fact_ids:
+                await session.execute(
+                    text(
+                        "UPDATE facts "
+                        "SET cluster_id = :cluster_id "
+                        "WHERE id = :fact_id AND project_id = :project_id"
+                    ),
+                    {
+                        "fact_id": str(fact_id),
+                        "cluster_id": str(target_cluster_id) if target_cluster_id else None,
+                        "project_id": project_id,
+                    },
+                )
+            await session.commit()
+
+        logger.info(f"Moved {len(fact_ids)} facts to cluster {target_cluster_id} in project {project_id}")
+
+    async def move_single(
+        self,
+        fact_id: str,
+        target_cluster_id: str | None,
+        project_id: str,
+    ) -> dict | None:
+        """Verschiebt einen einzelnen Fact zu einem Cluster (oder auf unassigned=NULL).
+
+        Returns:
+            Aktualisiertes Fact-Dict oder None wenn nicht gefunden.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "UPDATE facts "
+                    "SET cluster_id = :cluster_id "
+                    "WHERE id = :fact_id AND project_id = :project_id "
+                    "RETURNING id, project_id, interview_id, cluster_id, content, quote, confidence, created_at"
+                ),
+                {
+                    "fact_id": str(fact_id),
+                    "cluster_id": str(target_cluster_id) if target_cluster_id else None,
+                    "project_id": project_id,
+                },
+            )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else None
+
+    async def get_unassigned(
+        self,
+        project_id: str,
+    ) -> list[dict]:
+        """Laedt alle Facts ohne Cluster-Zuordnung.
+
+        Returns:
+            Liste von Fact-Dicts mit cluster_id=NULL.
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT id, project_id, interview_id, cluster_id, content, quote, confidence, created_at "
+                    "FROM facts "
+                    "WHERE project_id = :project_id AND cluster_id IS NULL "
+                    "ORDER BY created_at ASC"
+                ),
+                {"project_id": project_id},
+            )
+            rows = result.mappings().all()
+            return [dict(row) for row in rows]
+
     async def reset_cluster_assignments_for_project(
         self,
         project_id: str,

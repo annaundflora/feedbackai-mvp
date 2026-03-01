@@ -219,6 +219,123 @@ class ClusterRepository:
             row = result.mappings().first()
             return dict(row) if row else None
 
+    async def update_name(
+        self,
+        project_id: str,
+        cluster_id: str,
+        name: str,
+    ) -> dict | None:
+        """Benennt einen Cluster um.
+
+        Returns:
+            Aktualisiertes Cluster-Dict oder None wenn nicht gefunden.
+        """
+        now = datetime.now(timezone.utc)
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "UPDATE clusters "
+                    "SET name = :name, updated_at = :updated_at "
+                    "WHERE id = :cluster_id AND project_id = :project_id "
+                    "RETURNING id, project_id, name, summary, fact_count, interview_count, created_at, updated_at"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                    "name": name[:200],
+                    "updated_at": now,
+                },
+            )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else None
+
+    async def delete(
+        self,
+        project_id: str,
+        cluster_id: str,
+    ) -> None:
+        """Loescht einen einzelnen Cluster (für Merge/Split).
+
+        ON DELETE SET NULL setzt facts.cluster_id = NULL fuer verwaiste Facts.
+        """
+        async with self._session_factory() as session:
+            await session.execute(
+                text(
+                    "DELETE FROM clusters WHERE id = :cluster_id AND project_id = :project_id"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                },
+            )
+            await session.commit()
+        logger.info(f"Deleted cluster {cluster_id} in project {project_id}")
+
+    async def create(
+        self,
+        project_id: str,
+        name: str,
+    ) -> dict:
+        """Legt einen neuen Cluster an und gibt ihn zurueck.
+
+        Returns:
+            Neuer Cluster als Dict (inkl. id).
+        """
+        now = datetime.now(timezone.utc)
+        cluster_id = str(uuid.uuid4())
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "INSERT INTO clusters "
+                    "(id, project_id, name, summary, fact_count, interview_count, created_at, updated_at) "
+                    "VALUES (:id, :project_id, :name, NULL, 0, 0, :created_at, :updated_at) "
+                    "RETURNING id, project_id, name, summary, fact_count, interview_count, created_at, updated_at"
+                ),
+                {
+                    "id": cluster_id,
+                    "project_id": project_id,
+                    "name": name[:200],
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else {"id": cluster_id, "name": name, "project_id": project_id}
+
+    async def recalculate_counts(
+        self,
+        project_id: str,
+        cluster_id: str,
+    ) -> dict:
+        """Berechnet fact_count und interview_count eines Clusters neu via DB-Query.
+
+        Returns:
+            Aktualisiertes Cluster-Dict.
+        """
+        now = datetime.now(timezone.utc)
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "UPDATE clusters c "
+                    "SET "
+                    "  fact_count = (SELECT COUNT(*) FROM facts f WHERE f.cluster_id = c.id), "
+                    "  interview_count = (SELECT COUNT(DISTINCT f.interview_id) FROM facts f WHERE f.cluster_id = c.id), "
+                    "  updated_at = :updated_at "
+                    "WHERE c.id = :cluster_id AND c.project_id = :project_id "
+                    "RETURNING id, project_id, name, summary, fact_count, interview_count, created_at, updated_at"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                    "updated_at": now,
+                },
+            )
+            await session.commit()
+            row = result.mappings().first()
+            return dict(row) if row else {}
+
     async def get_detail(
         self,
         cluster_id: str,

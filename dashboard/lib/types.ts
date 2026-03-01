@@ -69,3 +69,70 @@ export interface ClusterDetailResponse {
   facts: FactResponse[]
   quotes: QuoteResponse[]  // Top-Level-Feld: Facts mit quote != null, mit interview_number
 }
+
+// --- Taxonomy-Editing Types (Slice 6) ---
+
+export interface RenameRequest {
+  name: string
+}
+
+export interface MergeRequest {
+  source_cluster_id: string
+  target_cluster_id: string
+}
+
+export interface MergeResponse {
+  merged_cluster: ClusterResponse
+  undo_id: string
+  undo_expires_at: string  // ISO 8601
+}
+
+export interface UndoMergeRequest {
+  undo_id: string
+}
+
+export interface SplitPreviewSubcluster {
+  name: string
+  fact_count: number
+  facts: FactResponse[]
+}
+
+export interface SplitPreviewResponse {
+  subclusters: SplitPreviewSubcluster[]
+}
+
+export interface SplitSubclusterInput {
+  name: string
+  fact_ids: string[]
+}
+
+export interface SplitConfirmRequest {
+  subclusters: SplitSubclusterInput[]
+}
+
+export interface MoveFactRequest {
+  cluster_id: string | null
+}
+
+export interface BulkMoveRequest {
+  fact_ids: string[]
+  target_cluster_id: string | null
+}
+
+export interface SuggestionResponse {
+  id: string
+  type: 'merge' | 'split'
+  source_cluster_id: string
+  source_cluster_name: string
+  target_cluster_id: string | null
+  target_cluster_name: string | null
+  similarity_score: number | null
+  proposed_data: Record<string, unknown> | null
+  status: 'pending'
+  created_at: string
+}
+
+export interface ReclusterStarted {
+  status: string
+  message: string
+}

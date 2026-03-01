@@ -174,3 +174,88 @@ class ClusterDetailResponse(BaseModel):
     interview_count: int
     facts: list[FactResponse]    # Alle Facts sortiert nach created_at ASC
     quotes: list[QuoteResponse]  # Facts mit quote != null, sortiert nach interview assigned_at ASC
+
+
+# --- Taxonomy-Editing DTOs (Slice 6) ---
+
+
+class RenameRequest(BaseModel):
+    """Request-DTO fuer PUT /api/projects/{id}/clusters/{cid}."""
+
+    name: str = Field(min_length=1, max_length=200)
+
+
+class MergeRequest(BaseModel):
+    """Request-DTO fuer POST /api/projects/{id}/clusters/merge."""
+
+    source_cluster_id: str  # UUID
+    target_cluster_id: str  # UUID
+
+
+class MergeResponse(BaseModel):
+    """Response-DTO nach erfolgreichem Merge."""
+
+    merged_cluster: ClusterResponse
+    undo_id: str            # UUID fuer Undo-Request
+    undo_expires_at: str    # ISO 8601 datetime string
+
+
+class UndoMergeRequest(BaseModel):
+    """Request-DTO fuer POST /api/projects/{id}/clusters/merge/undo."""
+
+    undo_id: str            # UUID
+
+
+class SplitPreviewSubcluster(BaseModel):
+    """Sub-Cluster Vorschau im SplitPreviewResponse."""
+
+    name: str
+    fact_count: int
+    facts: list[FactResponse]   # Vollstaendige Fact-Liste fuer Preview
+
+
+class SplitPreviewResponse(BaseModel):
+    """Response-DTO fuer POST /api/projects/{id}/clusters/{cid}/split/preview."""
+
+    subclusters: list[SplitPreviewSubcluster]  # Min 2 Sub-Cluster vorgeschlagen
+
+
+class SplitSubclusterInput(BaseModel):
+    """Input fuer einen Sub-Cluster beim Split."""
+
+    name: str = Field(min_length=1, max_length=200)
+    fact_ids: list[str]     # list[UUID]
+
+
+class SplitConfirmRequest(BaseModel):
+    """Request-DTO fuer POST /api/projects/{id}/clusters/{cid}/split."""
+
+    subclusters: list[SplitSubclusterInput] = Field(min_length=2)
+
+
+class MoveFactRequest(BaseModel):
+    """Request-DTO fuer PUT /api/projects/{id}/facts/{fid}."""
+
+    cluster_id: str | None  # UUID oder None = unassigned
+
+
+class BulkMoveRequest(BaseModel):
+    """Request-DTO fuer POST /api/projects/{id}/facts/bulk-move."""
+
+    fact_ids: list[str] = Field(min_length=1)   # list[UUID]
+    target_cluster_id: str | None               # UUID oder None = unassigned
+
+
+class SuggestionResponse(BaseModel):
+    """Response-DTO fuer Merge/Split-Vorschlaege."""
+
+    id: str
+    type: str               # "merge" oder "split"
+    source_cluster_id: str
+    source_cluster_name: str
+    target_cluster_id: str | None
+    target_cluster_name: str | None
+    similarity_score: float | None
+    proposed_data: dict | None  # JSONB aus DB
+    status: str             # "pending"
+    created_at: str         # ISO 8601

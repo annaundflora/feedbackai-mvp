@@ -2,59 +2,25 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
-import { ClusterCard } from '@/components/cluster-card'
-import { StatusBar } from '@/components/status-bar'
-import { ProjectTabs } from '@/components/project-tabs'
-import { EmptyState } from '@/components/empty-state'
 import { SkeletonCard } from '@/components/skeleton-card'
+import { ProjectInsightsClient } from './insights-client'
 
 // React.cache for deduplication if getProject is called multiple times on same page
 const getProject = cache(apiClient.getProject.bind(apiClient))
 const getClusters = cache(apiClient.getClusters.bind(apiClient))
 
 async function ProjectInsights({ id }: { id: string }) {
-  // Promise.all for parallel fetching (async-parallel rule)
   const [project, clusters] = await Promise.all([
     getProject(id),
     getClusters(id),
   ])
 
   return (
-    <>
-      <header className="mb-6">
-        <h2
-          data-testid="project-title"
-          className="text-2xl font-bold text-gray-900"
-        >
-          {project.name}
-        </h2>
-        <p data-testid="project-research-goal" className="text-gray-600 mt-1">
-          {project.research_goal}
-        </p>
-      </header>
-
-      <ProjectTabs projectId={id} activeTab="insights" />
-
-      <StatusBar
-        interviewCount={project.interview_count}
-        factCount={project.fact_count}
-        clusterCount={project.cluster_count}
-      />
-
-      {clusters.length === 0 ? (
-        <EmptyState
-          data-testid="clusters-empty-state"
-          message="No clusters yet."
-          ctaLabel="Assign interviews to get started"
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-          {clusters.map(cluster => (
-            <ClusterCard key={cluster.id} cluster={cluster} projectId={id} />
-          ))}
-        </div>
-      )}
-    </>
+    <ProjectInsightsClient
+      projectId={id}
+      initialProject={project}
+      initialClusters={clusters}
+    />
   )
 }
 
