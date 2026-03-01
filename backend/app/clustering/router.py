@@ -9,9 +9,7 @@ Implementiert 14 Endpunkte:
   - 1 Recluster-Endpunkt (Slice 3)
   - 1 Status-Endpunkt (Slice 3)
 """
-import asyncio
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 
 from app.clustering.cluster_repository import ClusterRepository
 from app.clustering.interview_assignment_repository import InterviewAssignmentRepository
@@ -321,6 +319,7 @@ async def list_clusters(
 )
 async def trigger_full_recluster(
     project_id: str,
+    background_tasks: BackgroundTasks,
     clustering_service=Depends(get_clustering_service),
 ) -> ReclusterStarted:
     """Loescht alle Cluster und startet vollstaendiges Re-Clustering.
@@ -336,8 +335,6 @@ async def trigger_full_recluster(
     Response 404: Projekt nicht gefunden
     Response 409: Re-Cluster laeuft bereits
     """
-    from app.clustering.service import ConflictError
-
     # Pruefe ob ein Recluster bereits laeuft (synchron, bevor Background-Task gestartet wird)
     if project_id in clustering_service._running_recluster:
         raise HTTPException(
@@ -345,10 +342,11 @@ async def trigger_full_recluster(
             detail="Full re-cluster already running for this project",
         )
 
-    # Starte Full-Recluster als Background-Task (fire-and-forget)
-    asyncio.create_task(
-        clustering_service.full_recluster(project_id=project_id)
-    )
+    # Starte Full-Recluster als FastAPI BackgroundTask (fire-and-forget)
+    # Verwendet BackgroundTasks statt asyncio.create_task(), um Kompatibilitaet
+    # mit TestClient (ASGI sync adapter) sicherzustellen und Event-Loop-Deadlocks
+    # unter Python 3.13 zu vermeiden.
+    background_tasks.add_task(clustering_service.full_recluster, project_id=project_id)
 
     return ReclusterStarted(
         status="started",
