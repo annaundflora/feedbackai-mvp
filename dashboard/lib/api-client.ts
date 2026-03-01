@@ -2,6 +2,7 @@ import type {
   ProjectListItem,
   ProjectResponse,
   ClusterResponse,
+  ClusterDetailResponse,
   CreateProjectRequest,
 } from '@/lib/types'
 
@@ -39,5 +40,9 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify(data),
     })
+  },
+
+  getClusterDetail(projectId: string, clusterId: string): Promise<ClusterDetailResponse> {
+    return apiFetch<ClusterDetailResponse>(`/api/projects/${projectId}/clusters/${clusterId}`)
   },
 }

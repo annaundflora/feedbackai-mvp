@@ -138,3 +138,39 @@ class ClusterResponse(BaseModel):
     interview_count: int
     created_at: datetime
     updated_at: datetime
+
+
+# --- Cluster Detail DTOs (Slice 5) ---
+
+
+class FactResponse(BaseModel):
+    """Response-DTO fuer einen einzelnen Fact mit Quote und Interview-Referenz."""
+
+    id: str                          # UUID
+    content: str                     # Fact-Text
+    quote: str | None                # Originalzitat aus Transcript
+    confidence: float | None         # LLM-Confidence 0.0-1.0
+    interview_id: str                # UUID referenziert mvp_interviews.session_id
+    interview_date: datetime | None  # created_at des Interviews (aus mvp_interviews)
+    cluster_id: str | None           # UUID referenziert clusters.id (NULLABLE — unassigned moeglich)
+
+
+class QuoteResponse(BaseModel):
+    """Response-DTO fuer ein Originalzitat mit Interview-Nummer."""
+
+    fact_id: str             # UUID referenziert facts.id
+    content: str             # Originalzitat aus Transcript (fact.quote)
+    interview_id: str        # UUID referenziert mvp_interviews.session_id
+    interview_number: int    # 1-basierte Positionsnummer im Projekt (ROW_NUMBER)
+
+
+class ClusterDetailResponse(BaseModel):
+    """Response-DTO fuer Cluster-Detail mit Facts und Quotes."""
+
+    id: str
+    name: str
+    summary: str | None
+    fact_count: int
+    interview_count: int
+    facts: list[FactResponse]    # Alle Facts sortiert nach created_at ASC
+    quotes: list[QuoteResponse]  # Facts mit quote != null, sortiert nach interview assigned_at ASC

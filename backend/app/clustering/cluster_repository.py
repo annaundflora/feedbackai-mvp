@@ -218,3 +218,74 @@ class ClusterRepository:
             )
             row = result.mappings().first()
             return dict(row) if row else None
+
+    async def get_detail(
+        self,
+        cluster_id: str,
+        project_id: str,
+    ) -> dict | None:
+        """Laedt Cluster-Detail mit Facts und Quotes.
+
+        Returns:
+            Dict mit Cluster-Feldern + facts (list) + quotes (list).
+            None wenn Cluster nicht gefunden oder nicht zu diesem Projekt gehoert.
+        """
+        async with self._session_factory() as session:
+            # 1. Cluster laden (mit Projekt-Pruefung fuer Security)
+            cluster_result = await session.execute(
+                text(
+                    "SELECT id, project_id, name, summary, fact_count, interview_count, "
+                    "created_at, updated_at "
+                    "FROM clusters "
+                    "WHERE id = :cluster_id AND project_id = :project_id"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                },
+            )
+            cluster_row = cluster_result.mappings().first()
+            if cluster_row is None:
+                return None
+
+            cluster = dict(cluster_row)
+
+            # 2. Facts laden (sortiert nach created_at ASC)
+            facts_result = await session.execute(
+                text(
+                    "SELECT f.id, f.content, f.quote, f.confidence, "
+                    "f.interview_id, f.cluster_id, "
+                    "m.created_at AS interview_date "
+                    "FROM facts f "
+                    "LEFT JOIN mvp_interviews m ON m.session_id = f.interview_id "
+                    "WHERE f.cluster_id = :cluster_id AND f.project_id = :project_id "
+                    "ORDER BY f.created_at ASC"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                },
+            )
+            facts_rows = facts_result.mappings().all()
+            cluster["facts"] = [dict(row) for row in facts_rows]
+
+            # 3. Quotes laden (Facts mit quote != null, mit ROW_NUMBER fuer interview_number)
+            quotes_result = await session.execute(
+                text(
+                    "SELECT f.id AS fact_id, f.quote AS content, f.interview_id, "
+                    "ROW_NUMBER() OVER (ORDER BY pi.assigned_at) AS interview_number "
+                    "FROM facts f "
+                    "LEFT JOIN project_interviews pi "
+                    "  ON pi.interview_id = f.interview_id AND pi.project_id = :project_id "
+                    "WHERE f.cluster_id = :cluster_id AND f.quote IS NOT NULL "
+                    "ORDER BY pi.assigned_at ASC"
+                ),
+                {
+                    "cluster_id": cluster_id,
+                    "project_id": project_id,
+                },
+            )
+            quotes_rows = quotes_result.mappings().all()
+            cluster["quotes"] = [dict(row) for row in quotes_rows]
+
+        return cluster

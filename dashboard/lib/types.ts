@@ -40,3 +40,32 @@ export interface CreateProjectRequest {
   prompt_context?: string
   extraction_source?: 'summary' | 'transcript'
 }
+
+// --- Cluster Detail Types (Slice 5) ---
+
+export interface FactResponse {
+  id: string
+  content: string
+  quote: string | null
+  confidence: number | null
+  interview_id: string
+  interview_date: string | null  // ISO 8601 datetime string (aus mvp_interviews.created_at)
+  cluster_id: string | null      // UUID (NULLABLE — unassigned moeglich)
+}
+
+export interface QuoteResponse {
+  fact_id: string
+  content: string        // Originalzitat (fact.quote)
+  interview_id: string
+  interview_number: number  // 1-basierte Positionsnummer im Projekt (ROW_NUMBER vom Backend)
+}
+
+export interface ClusterDetailResponse {
+  id: string
+  name: string
+  summary: string | null
+  fact_count: number
+  interview_count: number
+  facts: FactResponse[]
+  quotes: QuoteResponse[]  // Top-Level-Feld: Facts mit quote != null, mit interview_number
+}

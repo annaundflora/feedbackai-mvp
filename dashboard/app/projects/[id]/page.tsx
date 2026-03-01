@@ -50,7 +50,7 @@ async function ProjectInsights({ id }: { id: string }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
           {clusters.map(cluster => (
-            <ClusterCard key={cluster.id} cluster={cluster} />
+            <ClusterCard key={cluster.id} cluster={cluster} projectId={id} />
           ))}
         </div>
       )}

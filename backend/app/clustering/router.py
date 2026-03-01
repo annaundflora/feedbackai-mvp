@@ -20,12 +20,15 @@ from app.clustering.schemas import (
     AssignRequest,
     AvailableInterview,
     ChangeSourceRequest,
+    ClusterDetailResponse,
     ClusterResponse,
     CreateProjectRequest,
+    FactResponse,
     InterviewAssignment,
     PipelineStatus,
     ProjectListItem,
     ProjectResponse,
+    QuoteResponse,
     ReclusterStarted,
     UpdateModelsRequest,
     UpdateProjectRequest,
@@ -384,4 +387,69 @@ async def get_clustering_status(
         mode=None,
         progress=None,
         current_step=None,
+    )
+
+
+# ============================================================
+# Cluster Detail Endpoint (Slice 5)
+# ============================================================
+
+
+@router.get(
+    "/projects/{project_id}/clusters/{cluster_id}",
+    response_model=ClusterDetailResponse,
+)
+async def get_cluster_detail(
+    project_id: str,
+    cluster_id: str,
+    cluster_repo: ClusterRepository = Depends(get_cluster_repository),
+) -> ClusterDetailResponse:
+    """Laedt Cluster-Detail mit allen Facts und Originalzitaten.
+
+    GET /api/projects/{id}/clusters/{cid}
+    Response 200: ClusterDetailResponse (id, name, summary, fact_count, interview_count, facts, quotes)
+    Response 404: Cluster nicht gefunden oder gehoert nicht zu diesem Projekt
+    """
+    detail = await cluster_repo.get_detail(
+        cluster_id=cluster_id,
+        project_id=project_id,
+    )
+
+    if detail is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Cluster not found",
+        )
+
+    facts = [
+        FactResponse(
+            id=str(f["id"]),
+            content=f["content"],
+            quote=f.get("quote"),
+            confidence=f.get("confidence"),
+            interview_id=str(f["interview_id"]),
+            interview_date=f.get("interview_date"),
+            cluster_id=str(f["cluster_id"]) if f.get("cluster_id") else None,
+        )
+        for f in detail["facts"]
+    ]
+
+    quotes = [
+        QuoteResponse(
+            fact_id=str(q["fact_id"]),
+            content=q["content"],
+            interview_id=str(q["interview_id"]),
+            interview_number=int(q["interview_number"]),
+        )
+        for q in detail["quotes"]
+    ]
+
+    return ClusterDetailResponse(
+        id=str(detail["id"]),
+        name=detail["name"],
+        summary=detail.get("summary"),
+        fact_count=detail["fact_count"],
+        interview_count=detail["interview_count"],
+        facts=facts,
+        quotes=quotes,
     )
