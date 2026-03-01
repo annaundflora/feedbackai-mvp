@@ -1,0 +1,17 @@
+{
+  "spec_path": "specs/2026-02-28-build-command",
+  "feature_name": "build-command",
+  "status": "in_progress",
+  "current_state": "implementing",
+  "current_slice_id": "slice-01",
+  "retry_count": 0,
+  "failed_stage": null,
+  "waves": [
+    { "wave": 1, "slices": ["slice-01-slice-plan-coordinator", "slice-02-slice-impl-coordinator", "slice-05-pattern-dokumentation"] },
+    { "wave": 2, "slices": ["slice-03-build-command"] },
+    { "wave": 3, "slices": ["slice-04-multi-spec-support"] }
+  ],
+  "completed_slices": [],
+  "started_at": "2026-03-01T12:00:00Z",
+  "last_updated": "2026-03-01T12:00:00Z"
+}

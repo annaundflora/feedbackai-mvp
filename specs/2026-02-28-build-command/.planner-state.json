@@ -1,0 +1,21 @@
+{
+  "spec_path": "specs/2026-02-28-build-command",
+  "status": "completed",
+  "phase": "completed",
+  "started_at": "2026-03-01T10:00:00Z",
+  "completed_at": "2026-03-01T10:50:00Z",
+  "total_slices": 5,
+  "current_slice_index": 5,
+  "slices": [
+    { "number": 1, "name": "slice-plan-coordinator", "status": "approved", "retries": 0 },
+    { "number": 2, "name": "slice-impl-coordinator", "status": "approved", "retries": 0 },
+    { "number": 3, "name": "build-command", "status": "approved", "retries": 0 },
+    { "number": 4, "name": "multi-spec-support", "status": "approved", "retries": 0 },
+    { "number": 5, "name": "pattern-dokumentation", "status": "approved", "retries": 0 }
+  ],
+  "approved_slices": [1, 2, 3, 4, 5],
+  "failed_slices": [],
+  "gate3_retries": 0,
+  "last_action": "Gate 3 APPROVED - Ready for Orchestration",
+  "last_updated": "2026-03-01T10:50:00Z"
+}
