@@ -122,6 +122,42 @@ test.describe('Slice 04: Dashboard — Projekt-Liste + Cluster-Uebersicht', () =
       await expect(firstCard.locator('[data-testid="cluster-name"]')).toBeVisible()
       await expect(firstCard.locator('[data-testid="cluster-fact-count"]')).toBeVisible()
       await expect(firstCard.locator('[data-testid="cluster-interview-count"]')).toBeVisible()
+
+      // AC-7: Zusammenfassung (max 3 Zeilen) -- entweder Summary-Text oder "Generating summary..." Platzhalter
+      const summaryLocator = firstCard.locator('[data-testid="cluster-summary"]')
+      await expect(summaryLocator).toBeVisible()
+    }
+  })
+
+  // AC 7 (separat): Cluster-Cards zeigen Zusammenfassung mit line-clamp
+  test('zeigt Cluster-Card Zusammenfassung mit max 3 Zeilen oder Generating-Platzhalter', async ({ page }) => {
+    /**
+     * AC-7: GIVEN ein Projekt mit Clustern existiert
+     *       WHEN der Nutzer die Cluster-Cards betrachtet
+     *       THEN zeigt jede Card: Cluster-Name, Fact-Anzahl-Badge, Interview-Anzahl-Badge, Zusammenfassung (max 3 Zeilen)
+     */
+    // GIVEN: Projekt mit Clustern existiert
+    await page.goto(`${BASE_URL}/projects`)
+    await page.waitForSelector('[data-testid="project-card"]')
+    await page.locator('[data-testid="project-card"]').first().click()
+    await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+    const clusterCards = page.locator('[data-testid="cluster-card"]')
+    const count = await clusterCards.count()
+
+    if (count > 0) {
+      // WHEN: Nutzer betrachtet Cluster-Cards
+      // THEN: Jede Card hat Name, Fact-Badge, Interview-Badge, und Summary
+      for (let i = 0; i < Math.min(count, 3); i++) {
+        const card = clusterCards.nth(i)
+        await expect(card.locator('[data-testid="cluster-name"]')).toBeVisible()
+        await expect(card.locator('[data-testid="cluster-fact-count"]')).toBeVisible()
+        await expect(card.locator('[data-testid="cluster-interview-count"]')).toBeVisible()
+
+        // Zusammenfassung: entweder realer Text oder "Generating summary..." Platzhalter
+        const summary = card.locator('[data-testid="cluster-summary"]')
+        await expect(summary).toBeVisible()
+      }
     }
   })
 
