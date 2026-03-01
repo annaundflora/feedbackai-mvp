@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as interview_router
+from app.api.sse_routes import router as sse_router
 from app.clustering.cluster_repository import ClusterRepository
 from app.clustering.cluster_suggestion_repository import ClusterSuggestionRepository
 from app.clustering.events import SseEventBus
@@ -107,3 +108,4 @@ async def health_check():
 
 app.include_router(interview_router)
 app.include_router(clustering_router)
+app.include_router(sse_router)

@@ -145,6 +145,25 @@ class ClusteringService:
                 data={"mode": mode},
             )
 
+            # SSE: clustering_progress (extracting step)
+            # Zaehle wie viele Interviews bereits geclustert wurden
+            all_assignments = await self._assignment_repo.get_all_for_project(project_id)
+            completed_interviews = sum(
+                1 for a in all_assignments
+                if a.get("clustering_status") in ("completed", "running")
+            )
+            total_interviews = len(all_assignments)
+            await self._event_bus.publish(
+                project_id=project_id,
+                event_type="clustering_progress",
+                data={
+                    "interview_id": interview_id,
+                    "step": "extracting",
+                    "completed": max(0, completed_interviews - 1),
+                    "total": total_interviews,
+                },
+            )
+
             # Initialzustand fuer ClusteringGraph
             initial_state: ClusteringState = {
                 "project_id": project_id,
@@ -163,8 +182,33 @@ class ClusteringService:
                 "summaries": {},
             }
 
+            # SSE: clustering_progress (assigning step)
+            await self._event_bus.publish(
+                project_id=project_id,
+                event_type="clustering_progress",
+                data={
+                    "interview_id": interview_id,
+                    "step": "assigning",
+                    "completed": len(facts),
+                    "total": len(facts),
+                },
+            )
+
             # ClusteringGraph ausfuehren
             graph_output = await self._graph.invoke(initial_state)
+
+            # SSE: clustering_progress (summarizing step)
+            new_clusters_count = len(graph_output.get("new_clusters", []))
+            await self._event_bus.publish(
+                project_id=project_id,
+                event_type="clustering_progress",
+                data={
+                    "interview_id": interview_id,
+                    "step": "summarizing",
+                    "completed": 0,
+                    "total": new_clusters_count,
+                },
+            )
 
             # Ergebnisse persistieren
             await self._persist_results(

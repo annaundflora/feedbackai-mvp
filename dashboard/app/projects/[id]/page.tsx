@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { SkeletonCard } from '@/components/skeleton-card'
+import { ToastContainer } from '@/components/toast'
 import { ProjectInsightsClient } from './insights-client'
 
 // React.cache for deduplication if getProject is called multiple times on same page
@@ -15,11 +16,16 @@ async function ProjectInsights({ id }: { id: string }) {
     getClusters(id),
   ])
 
+  // Slice 7: token als optionaler Parameter fuer SSE-Auth
+  // Slice 8 wird hier den echten JWT-Token aus der Session einfuegen
+  const token = ''
+
   return (
     <ProjectInsightsClient
       projectId={id}
       initialProject={project}
       initialClusters={clusters}
+      token={token}
     />
   )
 }
@@ -60,6 +66,9 @@ export default async function ProjectPage({ params }: Props) {
       >
         <ProjectInsights id={id} />
       </Suspense>
+
+      {/* Toast Container fuer SSE-Events (clustering_failed etc.) */}
+      <ToastContainer />
     </main>
   )
 }

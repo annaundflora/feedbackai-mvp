@@ -24,11 +24,19 @@ def get_sse_event_bus(request: Request) -> SseEventBus:
 
     SseEventBus wird als Singleton gehalten, damit alle Services
     und der SSE-Endpoint die gleiche Instanz verwenden.
+
+    Bevorzugt app.state.event_bus (gesetzt im Lifespan) fuer korrekte Singleton-Semantik.
+    Faellt zurueck auf globale Variable fuer Tests ohne Lifespan.
     """
     global _sse_event_bus
+    # Bevorzuge app.state.event_bus (vom Lifespan gesetzt) -- gleiche Instanz wie ClusteringService
+    event_bus = getattr(request.app.state, "event_bus", None)
+    if event_bus is not None:
+        return event_bus
+    # Fallback: Globale Variable (fuer Tests ohne Lifespan)
     if _sse_event_bus is None:
         _sse_event_bus = SseEventBus()
-        request.app.state.sse_event_bus = _sse_event_bus
+        request.app.state.event_bus = _sse_event_bus
     return _sse_event_bus
 
 

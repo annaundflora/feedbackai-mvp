@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { StatusBar } from '@/components/status-bar'
 import { ProjectTabs } from '@/components/project-tabs'
 import { EmptyState } from '@/components/empty-state'
@@ -12,6 +13,9 @@ import { SplitModal } from '@/components/split-modal'
 import { UndoToast } from '@/components/undo-toast'
 import { SuggestionBanner } from '@/components/suggestion-banner'
 import { RecalculateModal } from '@/components/recalculate-modal'
+import { ProgressIndicator } from '@/components/progress-indicator'
+import { toast } from '@/components/toast'
+import { useProjectEvents } from '@/hooks/useProjectEvents'
 import { clientApi } from '@/lib/client-api'
 import type {
   ClusterResponse,
@@ -19,12 +23,13 @@ import type {
   ProjectResponse,
   SuggestionResponse,
 } from '@/lib/types'
-import Link from 'next/link'
+import type { ClusteringProgressData } from '@/hooks/useProjectEvents'
 
 interface ProjectInsightsClientProps {
   projectId: string
   initialProject: ProjectResponse
   initialClusters: ClusterResponse[]
+  token?: string
 }
 
 interface UndoState {
@@ -43,6 +48,7 @@ export function ProjectInsightsClient({
   projectId,
   initialProject,
   initialClusters,
+  token = '',
 }: ProjectInsightsClientProps) {
   const router = useRouter()
   const [clusters, setClusters] = useState<ClusterResponse[]>(initialClusters)
@@ -53,10 +59,78 @@ export function ProjectInsightsClient({
   const [suggestions, setSuggestions] = useState<SuggestionResponse[]>([])
   const [showRecalculate, setShowRecalculate] = useState(false)
 
+  // SSE Live-Update State
+  const [progress, setProgress] = useState<ClusteringProgressData | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [liveUpdateClusterIds, setLiveUpdateClusterIds] = useState<Set<string>>(new Set())
+  const [factCount, setFactCount] = useState(initialProject.fact_count)
+  const [clusterCount, setClusterCount] = useState(initialProject.cluster_count)
+
   // Load suggestions on mount
   useEffect(() => {
     clientApi.getSuggestions(projectId).then(setSuggestions).catch(() => {})
   }, [projectId])
+
+  // SSE Event Handlers
+  const handleFactExtracted = useCallback(
+    (data: { interview_id: string; fact_count: number }) => {
+      // Optimistic counter update -- exakte Counts kommen via router.refresh()
+      setFactCount((prev) => prev + data.fact_count)
+      // Trigger live_update_badge on all cluster cards (fact not yet assigned to cluster)
+      setLiveUpdateClusterIds(new Set(['*']))
+      setTimeout(() => setLiveUpdateClusterIds(new Set()), 3000)
+    },
+    [],
+  )
+
+  const handleClusteringStarted = useCallback(() => {
+    setIsProcessing(true)
+  }, [])
+
+  const handleClusteringProgress = useCallback((data: ClusteringProgressData) => {
+    setProgress(data)
+  }, [])
+
+  const handleClusteringCompleted = useCallback(
+    (data: { cluster_count: number; fact_count: number }) => {
+      setIsProcessing(false)
+      setProgress(null)
+      setClusterCount(data.cluster_count)
+      setFactCount(data.fact_count)
+      // Server-side refresh fuer exakte Daten (Next.js App Router)
+      router.refresh()
+    },
+    [router],
+  )
+
+  const handleClusteringFailed = useCallback(
+    (data: { error: string; unassigned_count: number }) => {
+      setIsProcessing(false)
+      setProgress(null)
+      toast.error(
+        `Clustering failed: ${data.unassigned_count} facts could not be assigned. Check the Insights tab.`,
+      )
+    },
+    [],
+  )
+
+  const handleSummaryUpdated = useCallback(() => {
+    router.refresh()
+  }, [router])
+
+  // SSE Hook: verbindet mit Backend SSE-Endpoint
+  // token wird in Slice 8 aus dem Auth-System befuellt
+  useProjectEvents(projectId, token, {
+    onFactExtracted: handleFactExtracted,
+    onClusteringStarted: handleClusteringStarted,
+    onClusteringProgress: handleClusteringProgress,
+    onClusteringCompleted: handleClusteringCompleted,
+    onClusteringFailed: handleClusteringFailed,
+    onSummaryUpdated: handleSummaryUpdated,
+  })
+
+  // '*' wildcard = pulse all cards (fact not yet assigned to a specific cluster)
+  const anyLiveUpdate = liveUpdateClusterIds.has('*')
 
   const handleRenameStart = useCallback((clusterId: string) => {
     setEditing({ type: 'rename', clusterId })
@@ -169,9 +243,18 @@ export function ProjectInsightsClient({
 
       <StatusBar
         interviewCount={project.interview_count}
-        factCount={project.fact_count}
-        clusterCount={project.cluster_count}
+        factCount={factCount}
+        clusterCount={clusterCount}
       />
+
+      {/* Progress Indicator -- nur sichtbar waehrend Clustering */}
+      {isProcessing && progress && (
+        <ProgressIndicator
+          step={progress.step}
+          completed={progress.completed}
+          total={progress.total}
+        />
+      )}
 
       {/* Suggestion Banners */}
       {suggestions.length > 0 && (
@@ -218,15 +301,24 @@ export function ProjectInsightsClient({
                   />
                   <div className="flex gap-4 mt-2">
                     <span className="text-sm text-gray-600">
-                      ● {cluster.fact_count} Facts
+                      {cluster.fact_count} Facts
                     </span>
                     <span className="text-sm text-gray-600">
-                      ● {cluster.interview_count} Interviews
+                      {cluster.interview_count} Interviews
                     </span>
                   </div>
                 </article>
               ) : (
-                <article className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+                <article className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 relative">
+                  {/* live_update_badge -- pulsierender Dot fuer 3s */}
+                  {(anyLiveUpdate || liveUpdateClusterIds.has(cluster.id)) && (
+                    <span
+                      aria-label="New fact added"
+                      aria-live="polite"
+                      data-testid="live-update-badge"
+                      className="absolute top-3 right-10 w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"
+                    />
+                  )}
                   <div className="flex items-start justify-between">
                     <Link
                       href={`/projects/${projectId}/clusters/${cluster.id}`}
@@ -259,13 +351,13 @@ export function ProjectInsightsClient({
                       data-testid="cluster-fact-count"
                       className="text-sm text-gray-600"
                     >
-                      ● {cluster.fact_count} Facts
+                      {cluster.fact_count} Facts
                     </span>
                     <span
                       data-testid="cluster-interview-count"
                       className="text-sm text-gray-600"
                     >
-                      ● {cluster.interview_count} Interviews
+                      {cluster.interview_count} Interviews
                     </span>
                   </div>
 
