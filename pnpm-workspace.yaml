@@ -1,0 +1,6 @@
+packages:
+  - dashboard
+  - widget
+
+ignoredBuiltDependencies:
+  - esbuild

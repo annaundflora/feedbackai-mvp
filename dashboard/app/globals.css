@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: var(--color-white);
+  --color-surface-elevated: var(--color-gray-50);
+  --color-text-primary: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-tertiary: var(--color-gray-400);
+  --color-border-default: var(--color-gray-200);
+  --color-border-hover: var(--color-gray-300);
+  --color-brand: oklch(0.65 0.2 250);
+  --color-brand-dark: oklch(0.45 0.2 250);
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply tracking-tight;
+    text-wrap: balance;
+  }
+}
