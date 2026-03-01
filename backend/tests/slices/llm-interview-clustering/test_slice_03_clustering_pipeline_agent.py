@@ -1651,11 +1651,15 @@ class TestClusteringRouterIntegration:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
+        from app.auth.middleware import get_current_user
         from app.clustering.router import router
         from app.clustering.schemas import ReclusterStarted
 
         app = FastAPI()
         app.include_router(router)
+
+        # Bypass auth for this test
+        app.dependency_overrides[get_current_user] = lambda: {"id": "test-user", "username": "test"}
 
         # Mock settings and services on app.state
         mock_settings = MagicMock()
@@ -1686,10 +1690,14 @@ class TestClusteringRouterIntegration:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
+        from app.auth.middleware import get_current_user
         from app.clustering.router import router
 
         app = FastAPI()
         app.include_router(router)
+
+        # Bypass auth for this test
+        app.dependency_overrides[get_current_user] = lambda: {"id": "test-user", "username": "test"}
 
         mock_settings = MagicMock()
         mock_settings.async_database_url = "postgresql+asyncpg://test:test@localhost/test"
@@ -1716,10 +1724,14 @@ class TestClusteringRouterIntegration:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
+        from app.auth.middleware import get_current_user
         from app.clustering.router import router
 
         app = FastAPI()
         app.include_router(router)
+
+        # Bypass auth for this test
+        app.dependency_overrides[get_current_user] = lambda: {"id": "test-user", "username": "test"}
 
         mock_settings = MagicMock()
         mock_settings.async_database_url = "postgresql+asyncpg://test:test@localhost/test"
@@ -1747,10 +1759,14 @@ class TestClusteringRouterIntegration:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
+        from app.auth.middleware import get_current_user
         from app.clustering.router import router
 
         app = FastAPI()
         app.include_router(router)
+
+        # Bypass auth for this test
+        app.dependency_overrides[get_current_user] = lambda: {"id": "test-user", "username": "test"}
 
         mock_settings = MagicMock()
         mock_settings.async_database_url = "postgresql+asyncpg://test:test@localhost/test"
