@@ -137,6 +137,36 @@ export interface ReclusterStarted {
   message: string
 }
 
+// --- Interview Detail Types ---
+
+export interface TranscriptMessage {
+  role: string
+  content: string
+}
+
+export interface InterviewFactWithCluster {
+  id: string
+  content: string
+  quote: string | null
+  confidence: number | null
+  cluster_id: string | null
+  cluster_name: string | null
+}
+
+export interface InterviewDetailResponse {
+  interview_id: string
+  interview_number: number
+  date: string // ISO 8601
+  status: string | null
+  extraction_status: string
+  clustering_status: string
+  summary: string | null
+  message_count: number
+  transcript: TranscriptMessage[]
+  facts: InterviewFactWithCluster[]
+  fact_count: number
+}
+
 // --- Interview Assignment Types (Slice 8) ---
 
 export interface InterviewAssignment {

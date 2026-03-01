@@ -119,10 +119,21 @@ export function SettingsForm({ project }: SettingsFormProps): JSX.Element {
     if (!isValid || !isDirty) return;
     setIsSaving(true);
     try {
-      await clientFetch(`/api/projects/${project.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ name: name.trim(), research_goal: researchGoal.trim(), prompt_context: promptContext.trim() || null }),
-      });
+      const promises: Promise<unknown>[] = [
+        clientFetch(`/api/projects/${project.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ name: name.trim(), research_goal: researchGoal.trim(), prompt_context: promptContext.trim() || null }),
+        }),
+      ];
+      if (extractionSource !== project.extraction_source && !project.extraction_source_locked) {
+        promises.push(
+          clientFetch(`/api/projects/${project.id}/extraction-source`, {
+            method: "PUT",
+            body: JSON.stringify({ extraction_source: extractionSource }),
+          }),
+        );
+      }
+      await Promise.all(promises);
       setIsDirty(false);
     } finally {
       setIsSaving(false);

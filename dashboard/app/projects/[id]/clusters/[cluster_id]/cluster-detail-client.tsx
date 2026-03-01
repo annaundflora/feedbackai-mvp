@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { InlineRename } from '@/components/inline-rename'
 import { MergeDialog } from '@/components/merge-dialog'
@@ -279,6 +280,7 @@ export function ClusterDetailClient({
                 fact={fact}
                 index={index}
                 isSelected={selectedFactIds.has(fact.id)}
+                projectId={projectId}
                 onToggle={toggleFactSelection}
                 onMove={handleFactMove}
                 onMarkUnassigned={handleMarkUnassigned}
@@ -299,7 +301,7 @@ export function ClusterDetailClient({
             </h2>
             <ul className="space-y-3">
               {cluster.quotes.map((quote) => (
-                <QuoteItem key={quote.fact_id} quote={quote} />
+                <QuoteItem key={quote.fact_id} quote={quote} projectId={projectId} />
               ))}
             </ul>
           </section>
@@ -346,6 +348,7 @@ interface FactItemWithControlsProps {
   fact: FactResponse
   index: number
   isSelected: boolean
+  projectId: string
   onToggle: (factId: string) => void
   onMove: (factId: string, newClusterId: string | null) => Promise<void>
   onMarkUnassigned: (factId: string) => Promise<void>
@@ -356,6 +359,7 @@ function FactItemWithControls({
   fact,
   index,
   isSelected,
+  projectId,
   onToggle,
   onMove,
   onMarkUnassigned,
@@ -388,13 +392,14 @@ function FactItemWithControls({
             {fact.content}
           </p>
           <div className="flex items-center flex-wrap gap-2 mt-2">
-            <span
+            <Link
+              href={`/projects/${projectId}/interviews/${fact.interview_id}`}
               data-testid="fact-interview-badge"
               aria-label={`Source: Interview #${number}`}
-              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
             >
               Interview #{number}
-            </span>
+            </Link>
             {fact.confidence !== null ? (
               <span
                 data-testid="fact-confidence"

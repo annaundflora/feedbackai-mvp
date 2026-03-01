@@ -49,6 +49,7 @@ from app.clustering.schemas import (
     CreateProjectRequest,
     FactResponse,
     InterviewAssignment,
+    InterviewDetailResponse,
     MergeRequest,
     MergeResponse,
     MoveFactRequest,
@@ -279,6 +280,36 @@ async def assign_interviews(
     Response 409: Interview bereits zugeordnet
     """
     return await service.assign(project_id=project_id, request=body)
+
+
+# ============================================================
+# Interview Detail Endpoint
+# ============================================================
+
+
+@router.get(
+    "/projects/{project_id}/interviews/{interview_id}",
+    response_model=InterviewDetailResponse,
+)
+async def get_interview_detail(
+    project_id: str,
+    interview_id: str,
+    current_user: dict = Depends(get_current_user),
+    service: InterviewAssignmentService = Depends(get_assignment_service),
+) -> InterviewDetailResponse:
+    """Laedt Interview-Detail mit Transcript, Summary und Facts.
+
+    GET /api/projects/{id}/interviews/{iid}
+    Response 200: InterviewDetailResponse
+    Response 404: Interview nicht in Projekt gefunden
+    """
+    result = await service.get_interview_detail(
+        project_id=project_id,
+        interview_id=interview_id,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Interview not found in project")
+    return result
 
 
 # ============================================================

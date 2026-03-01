@@ -44,6 +44,18 @@ export function AssignInterviewsModal({
     });
   }
 
+  function selectCount(count: number): void {
+    setSelected(new Set(available.slice(0, count).map((i) => i.session_id)));
+  }
+
+  function selectAll(): void {
+    setSelected(new Set(available.map((i) => i.session_id)));
+  }
+
+  function selectNone(): void {
+    setSelected(new Set());
+  }
+
   async function handleAssign(): Promise<void> {
     if (selected.size === 0) return;
     setIsAssigning(true);
@@ -66,7 +78,7 @@ export function AssignInterviewsModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
       data-testid="assign-interviews-modal"
     >
-      <div className="bg-white rounded-xl border border-gray-200 shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-xl w-full max-w-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 id="assign-modal-title" className="text-base font-semibold text-gray-900">
             Assign Interviews
@@ -81,7 +93,40 @@ export function AssignInterviewsModal({
           </button>
         </div>
 
-        <div className="px-6 py-4 max-h-80 overflow-y-auto overscroll-contain">
+        {!isLoading && available.length > 0 && (
+          <div className="flex items-center gap-2 px-6 py-2 border-b border-gray-100">
+            <span className="text-xs text-gray-500 mr-1">Quick select:</span>
+            {[5, 10, 20].map(
+              (n) =>
+                available.length >= n && (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => selectCount(n)}
+                    className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    {n}
+                  </button>
+                ),
+            )}
+            <button
+              type="button"
+              onClick={selectAll}
+              className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              All ({available.length})
+            </button>
+            <button
+              type="button"
+              onClick={selectNone}
+              className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              None
+            </button>
+          </div>
+        )}
+
+        <div className="px-6 py-4 max-h-[60vh] overflow-y-auto overscroll-contain">
           {isLoading ? (
             <div className="text-sm text-gray-500 text-center py-4">Loading interviews…</div>
           ) : available.length === 0 ? (

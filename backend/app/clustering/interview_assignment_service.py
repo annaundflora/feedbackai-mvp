@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from app.clustering.interview_assignment_repository import InterviewAssignmentRepository
-from app.clustering.schemas import AssignRequest, AvailableInterview, InterviewAssignment
+from app.clustering.schemas import AssignRequest, AvailableInterview, InterviewAssignment, InterviewDetailResponse, InterviewFactWithCluster, TranscriptMessage
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +116,71 @@ class InterviewAssignmentService:
             )
             for row in rows
         ]
+
+    async def get_interview_detail(
+        self, project_id: str, interview_id: str
+    ) -> InterviewDetailResponse | None:
+        """Laedt Interview-Detail mit Transcript und Facts.
+
+        Args:
+            project_id: UUID des Projekts.
+            interview_id: UUID des Interviews.
+
+        Returns:
+            InterviewDetailResponse oder None.
+        """
+        data = await self._repo.get_interview_detail(
+            project_id=project_id, interview_id=interview_id
+        )
+        if data is None:
+            return None
+
+        # Transcript JSONB parsing (kann str oder list sein)
+        import json as _json
+
+        raw_transcript = data.get("transcript")
+        transcript: list[TranscriptMessage] = []
+        if raw_transcript is not None:
+            if isinstance(raw_transcript, str):
+                try:
+                    raw_transcript = _json.loads(raw_transcript)
+                except Exception:
+                    raw_transcript = []
+            if isinstance(raw_transcript, list):
+                transcript = [
+                    TranscriptMessage(
+                        role=msg.get("role", "unknown"),
+                        content=msg.get("content", ""),
+                    )
+                    for msg in raw_transcript
+                    if isinstance(msg, dict)
+                ]
+
+        facts = [
+            InterviewFactWithCluster(
+                id=str(f["id"]),
+                content=f["content"],
+                quote=f.get("quote"),
+                confidence=f.get("confidence"),
+                cluster_id=str(f["cluster_id"]) if f.get("cluster_id") else None,
+                cluster_name=f.get("cluster_name"),
+            )
+            for f in data.get("facts", [])
+        ]
+
+        return InterviewDetailResponse(
+            interview_id=str(data["interview_id"]),
+            interview_number=int(data["interview_number"]),
+            date=data["date"],
+            status=data.get("status"),
+            extraction_status=data["extraction_status"],
+            clustering_status=data["clustering_status"],
+            summary=data.get("summary"),
+            message_count=len(transcript),
+            transcript=transcript,
+            facts=facts,
+            fact_count=len(facts),
+        )
 
     async def retry(
         self,

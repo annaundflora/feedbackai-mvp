@@ -246,6 +246,43 @@ class BulkMoveRequest(BaseModel):
     target_cluster_id: str | None               # UUID oder None = unassigned
 
 
+# --- Interview Detail DTOs ---
+
+
+class TranscriptMessage(BaseModel):
+    """Einzelne Nachricht im Interview-Transcript."""
+
+    role: str
+    content: str
+
+
+class InterviewFactWithCluster(BaseModel):
+    """Fact mit optionaler Cluster-Zuordnung fuer Interview-Detail."""
+
+    id: str
+    content: str
+    quote: str | None
+    confidence: float | None
+    cluster_id: str | None
+    cluster_name: str | None
+
+
+class InterviewDetailResponse(BaseModel):
+    """Response-DTO fuer Interview-Detail."""
+
+    interview_id: str
+    interview_number: int
+    date: datetime
+    status: str | None
+    extraction_status: str
+    clustering_status: str
+    summary: str | None
+    message_count: int
+    transcript: list[TranscriptMessage]
+    facts: list[InterviewFactWithCluster]
+    fact_count: int
+
+
 class SuggestionResponse(BaseModel):
     """Response-DTO fuer Merge/Split-Vorschlaege."""
 

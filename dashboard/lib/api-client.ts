@@ -6,6 +6,7 @@ import type {
   ClusterResponse,
   ClusterDetailResponse,
   CreateProjectRequest,
+  InterviewDetailResponse,
 } from '@/lib/types'
 import { getAuthToken } from '@/lib/auth'
 
@@ -57,5 +58,9 @@ export const apiClient = {
 
   getClusterDetail(projectId: string, clusterId: string): Promise<ClusterDetailResponse> {
     return apiFetch<ClusterDetailResponse>(`/api/projects/${projectId}/clusters/${clusterId}`)
+  },
+
+  getInterviewDetail(projectId: string, interviewId: string): Promise<InterviewDetailResponse> {
+    return apiFetch<InterviewDetailResponse>(`/api/projects/${projectId}/interviews/${interviewId}`)
   },
 }

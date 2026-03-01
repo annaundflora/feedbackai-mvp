@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
-import { ProjectTabs } from '@/components/project-tabs'
 import { ClusterDetailSkeleton } from '@/components/cluster-detail-skeleton'
 import type { ClusterDetailResponse } from '@/lib/types'
 import { ClusterDetailClient } from './cluster-detail-client'
@@ -62,8 +61,6 @@ export default async function ClusterDetailPage({ params }: Props) {
           ← Back to Clusters
         </Link>
       </div>
-
-      <ProjectTabs projectId={id} activeTab="insights" />
 
       <Suspense fallback={<ClusterDetailSkeleton />}>
         <ClusterDetailContent projectId={id} clusterId={cluster_id} />

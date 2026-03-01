@@ -138,7 +138,19 @@ export function InterviewsTabClient({
               const badge = STATUS_BADGE[interview.clustering_status] ?? STATUS_BADGE.pending;
               const isFailed = interview.extraction_status === "failed" || interview.clustering_status === "failed";
               return (
-                <tr key={interview.interview_id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={interview.interview_id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(`/projects/${projectId}/interviews/${interview.interview_id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push(`/projects/${projectId}/interviews/${interview.interview_id}`);
+                    }
+                  }}
+                >
                   <td className="px-4 py-3 text-gray-500 tabular-nums">#{index + 1}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                     {new Date(interview.date).toLocaleDateString("en-US", {
@@ -159,7 +171,7 @@ export function InterviewsTabClient({
                       </span>
                       {isFailed && (
                         <button
-                          onClick={() => void handleRetry(interview.interview_id)}
+                          onClick={(e) => { e.stopPropagation(); void handleRetry(interview.interview_id); }}
                           disabled={retryingId === interview.interview_id}
                           aria-label="Retry processing"
                           className="text-gray-400 hover:text-gray-600 focus-visible:ring-1 focus-visible:ring-gray-400 rounded disabled:opacity-50 transition-colors"

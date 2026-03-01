@@ -286,6 +286,59 @@ class InterviewAssignmentRepository:
             row = result.mappings().first()
             return dict(row) if row else {}
 
+    async def get_interview_detail(
+        self, project_id: str, interview_id: str
+    ) -> dict | None:
+        """Laedt Interview-Detail mit Nummer, Transcript, Summary und Facts.
+
+        Args:
+            project_id: UUID des Projekts.
+            interview_id: UUID des Interviews.
+
+        Returns:
+            dict mit allen Detail-Feldern oder None wenn nicht gefunden.
+        """
+        async with self._session_factory() as session:
+            # Interview-Daten mit ROW_NUMBER fuer interview_number
+            result = await session.execute(
+                text(
+                    "WITH numbered AS ("
+                    "  SELECT pi.interview_id, pi.extraction_status, pi.clustering_status, "
+                    "    ROW_NUMBER() OVER (ORDER BY pi.assigned_at) AS interview_number "
+                    "  FROM project_interviews pi "
+                    "  WHERE pi.project_id = :project_id"
+                    ") "
+                    "SELECT n.interview_id, n.interview_number, n.extraction_status, n.clustering_status, "
+                    "  mi.created_at AS date, mi.status, mi.summary, mi.transcript "
+                    "FROM numbered n "
+                    "LEFT JOIN mvp_interviews mi ON mi.session_id = n.interview_id "
+                    "WHERE n.interview_id = :interview_id"
+                ),
+                {"project_id": project_id, "interview_id": interview_id},
+            )
+            row = result.mappings().first()
+            if not row:
+                return None
+
+            interview_data = dict(row)
+
+            # Facts mit Cluster-Namen
+            facts_result = await session.execute(
+                text(
+                    "SELECT f.id, f.content, f.quote, f.confidence, "
+                    "  f.cluster_id, c.name AS cluster_name "
+                    "FROM facts f "
+                    "LEFT JOIN clusters c ON c.id = f.cluster_id "
+                    "WHERE f.interview_id = :interview_id AND f.project_id = :project_id "
+                    "ORDER BY f.created_at ASC"
+                ),
+                {"interview_id": interview_id, "project_id": project_id},
+            )
+            facts_rows = facts_result.mappings().all()
+            interview_data["facts"] = [dict(f) for f in facts_rows]
+
+            return interview_data
+
     async def get_all_for_project(
         self,
         project_id: str,
