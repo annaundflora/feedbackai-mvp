@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
+import { getAuthToken } from '@/lib/auth'
 import { SkeletonCard } from '@/components/skeleton-card'
 import { ToastContainer } from '@/components/toast'
 import { ProjectInsightsClient } from './insights-client'
@@ -11,21 +12,18 @@ const getProject = cache(apiClient.getProject.bind(apiClient))
 const getClusters = cache(apiClient.getClusters.bind(apiClient))
 
 async function ProjectInsights({ id }: { id: string }) {
-  const [project, clusters] = await Promise.all([
+  const [project, clusters, token] = await Promise.all([
     getProject(id),
     getClusters(id),
+    getAuthToken(),
   ])
-
-  // Slice 7: token als optionaler Parameter fuer SSE-Auth
-  // Slice 8 wird hier den echten JWT-Token aus der Session einfuegen
-  const token = ''
 
   return (
     <ProjectInsightsClient
       projectId={id}
       initialProject={project}
       initialClusters={clusters}
-      token={token}
+      token={token ?? ''}
     />
   )
 }

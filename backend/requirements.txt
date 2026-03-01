@@ -9,3 +9,5 @@ sse-starlette
 sqlalchemy[asyncio]>=2.0
 asyncpg
 pydantic-settings
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4

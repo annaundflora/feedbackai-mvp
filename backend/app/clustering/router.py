@@ -24,6 +24,8 @@ Implementiert 14 Endpunkte (Slices 1-5) + 11 neue Endpunkte (Slice 6):
 """
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 
+from app.auth.middleware import get_current_user
+
 from app.clustering.cluster_repository import ClusterRepository
 from app.clustering.cluster_suggestion_repository import ClusterSuggestionRepository
 from app.clustering.exceptions import (
@@ -109,7 +111,7 @@ def get_assignment_service(request: Request) -> InterviewAssignmentService:
 @router.post("/projects", status_code=201, response_model=ProjectResponse)
 async def create_project(
     body: CreateProjectRequest,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     """Erstellt ein neues Projekt.
@@ -117,12 +119,12 @@ async def create_project(
     POST /api/projects
     Response 201: ProjectResponse
     """
-    return await service.create(request=body, user_id=user_id)
+    return await service.create(request=body, user_id=str(current_user["id"]))
 
 
 @router.get("/projects", response_model=list[ProjectListItem])
 async def list_projects(
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectListItem]:
     """Listet alle Projekte des Users.
@@ -130,13 +132,13 @@ async def list_projects(
     GET /api/projects
     Response 200: list[ProjectListItem] sortiert nach updated_at desc
     """
-    return await service.list(user_id=user_id)
+    return await service.list(user_id=str(current_user["id"]))
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     """Laedt ein einzelnes Projekt mit aggregierten Zaehlern.
@@ -145,14 +147,14 @@ async def get_project(
     Response 200: ProjectResponse
     Response 404: Project not found
     """
-    return await service.get(project_id=project_id, user_id=user_id)
+    return await service.get(project_id=project_id, user_id=str(current_user["id"]))
 
 
 @router.put("/projects/{project_id}", response_model=ProjectResponse)
 async def update_project(
     project_id: str,
     body: UpdateProjectRequest,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     """Aktualisiert Projektfelder (PATCH-Semantik via PUT).
@@ -162,7 +164,7 @@ async def update_project(
     Response 404: Project not found
     """
     return await service.update(
-        project_id=project_id, user_id=user_id, request=body
+        project_id=project_id, user_id=str(current_user["id"]), request=body
     )
 
 
@@ -170,7 +172,7 @@ async def update_project(
 async def update_project_models(
     project_id: str,
     body: UpdateModelsRequest,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     """Aktualisiert Model-Slugs des Projekts.
@@ -180,7 +182,7 @@ async def update_project_models(
     Response 404: Project not found
     """
     return await service.update_models(
-        project_id=project_id, user_id=user_id, request=body
+        project_id=project_id, user_id=str(current_user["id"]), request=body
     )
 
 
@@ -188,7 +190,7 @@ async def update_project_models(
 async def change_extraction_source(
     project_id: str,
     body: ChangeSourceRequest,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     """Aendert die Extraction-Source (summary oder transcript).
@@ -200,14 +202,14 @@ async def change_extraction_source(
     Note: re_extract-Trigger wird in Slice 2 implementiert.
     """
     return await service.change_extraction_source(
-        project_id=project_id, user_id=user_id, request=body
+        project_id=project_id, user_id=str(current_user["id"]), request=body
     )
 
 
 @router.delete("/projects/{project_id}", status_code=204)
 async def delete_project(
     project_id: str,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> Response:
     """Loescht ein Projekt mit allen zugehoerigen Daten (CASCADE).
@@ -216,7 +218,7 @@ async def delete_project(
     Response 204: No Content
     Response 404: Project not found
     """
-    await service.delete(project_id=project_id, user_id=user_id)
+    await service.delete(project_id=project_id, user_id=str(current_user["id"]))
     return Response(status_code=204)
 
 
@@ -231,6 +233,7 @@ async def delete_project(
 )
 async def list_assigned_interviews(
     project_id: str,
+    current_user: dict = Depends(get_current_user),
     service: InterviewAssignmentService = Depends(get_assignment_service),
 ) -> list[InterviewAssignment]:
     """Listet alle einem Projekt zugeordneten Interviews.
@@ -247,7 +250,7 @@ async def list_assigned_interviews(
 )
 async def list_available_interviews(
     project_id: str,
-    user_id: str = Query(default="00000000-0000-0000-0000-000000000001"),  # Slice 1 Stub
+    current_user: dict = Depends(get_current_user),
     service: InterviewAssignmentService = Depends(get_assignment_service),
 ) -> list[AvailableInterview]:
     """Listet alle verfuegbaren (noch nicht zugeordneten) Interviews.
@@ -255,7 +258,7 @@ async def list_available_interviews(
     GET /api/projects/{id}/interviews/available
     Response 200: list[AvailableInterview]
     """
-    return await service.list_available(user_id=user_id)
+    return await service.list_available(user_id=str(current_user["id"]))
 
 
 @router.post(
@@ -266,6 +269,7 @@ async def list_available_interviews(
 async def assign_interviews(
     project_id: str,
     body: AssignRequest,
+    current_user: dict = Depends(get_current_user),
     service: InterviewAssignmentService = Depends(get_assignment_service),
 ) -> list[InterviewAssignment]:
     """Ordnet Interviews einem Projekt zu.
@@ -289,6 +293,7 @@ async def assign_interviews(
 async def retry_interview_extraction(
     project_id: str,
     interview_id: str,
+    current_user: dict = Depends(get_current_user),
     service: InterviewAssignmentService = Depends(get_assignment_service),
 ) -> InterviewAssignment:
     """Setzt extraction_status auf 'pending' und startet Extraction-Task neu.
@@ -373,6 +378,7 @@ def get_clustering_service(request: Request):
 )
 async def list_clusters(
     project_id: str,
+    current_user: dict = Depends(get_current_user),
     cluster_repo: ClusterRepository = Depends(get_cluster_repository),
 ) -> list[ClusterResponse]:
     """Listet alle Cluster eines Projekts.
@@ -391,6 +397,7 @@ async def list_clusters(
 async def trigger_full_recluster(
     project_id: str,
     background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
     clustering_service=Depends(get_clustering_service),
 ) -> ReclusterStarted:
     """Loescht alle Cluster und startet vollstaendiges Re-Clustering.
@@ -432,6 +439,7 @@ async def trigger_full_recluster(
 )
 async def get_clustering_status(
     project_id: str,
+    current_user: dict = Depends(get_current_user),
     clustering_service=Depends(get_clustering_service),
 ) -> PipelineStatus:
     """Gibt den aktuellen Status der Clustering-Pipeline zurueck.
@@ -470,6 +478,7 @@ async def get_clustering_status(
 async def get_cluster_detail(
     project_id: str,
     cluster_id: str,
+    current_user: dict = Depends(get_current_user),
     cluster_repo: ClusterRepository = Depends(get_cluster_repository),
 ) -> ClusterDetailResponse:
     """Laedt Cluster-Detail mit allen Facts und Originalzitaten.
@@ -536,6 +545,7 @@ async def rename_cluster(
     project_id: str,
     cluster_id: str,
     body: RenameRequest,
+    current_user: dict = Depends(get_current_user),
     taxonomy_service: TaxonomyService = Depends(get_taxonomy_service),
 ) -> ClusterResponse:
     """Benennt einen Cluster um (kein Summary-Regen, kein Re-Clustering).
@@ -561,6 +571,7 @@ async def rename_cluster(
 async def merge_clusters(
     project_id: str,
     body: MergeRequest,
+    current_user: dict = Depends(get_current_user),
     taxonomy_service: TaxonomyService = Depends(get_taxonomy_service),
 ) -> MergeResponse:
     """Merged zwei Cluster: verschiebt Facts von Source nach Target, loescht Source.
@@ -592,6 +603,7 @@ async def merge_clusters(
 async def undo_merge(
     project_id: str,
     body: UndoMergeRequest,
+    current_user: dict = Depends(get_current_user),
     taxonomy_service: TaxonomyService = Depends(get_taxonomy_service),
 ) -> ClusterResponse:
     """Macht einen Merge rueckgaengig (innerhalb 30 Sekunden nach Merge).
@@ -616,6 +628,7 @@ async def undo_merge(
 async def preview_split(
     project_id: str,
     cluster_id: str,
+    current_user: dict = Depends(get_current_user),
     taxonomy_service: TaxonomyService = Depends(get_taxonomy_service),
 ) -> SplitPreviewResponse:
     """LLM analysiert Cluster und schlaegt Sub-Cluster vor.
@@ -643,6 +656,7 @@ async def execute_split(
     project_id: str,
     cluster_id: str,
     body: SplitConfirmRequest,
+    current_user: dict = Depends(get_current_user),
     taxonomy_service: TaxonomyService = Depends(get_taxonomy_service),
 ) -> list[ClusterResponse]:
     """Fuehrt den Split aus: neue Cluster anlegen, Original loeschen.
@@ -674,6 +688,7 @@ async def move_fact(
     project_id: str,
     fact_id: str,
     body: MoveFactRequest,
+    current_user: dict = Depends(get_current_user),
     fact_repo: FactRepository = Depends(get_fact_repository),
     cluster_repo: ClusterRepository = Depends(get_cluster_repository),
 ) -> FactResponse:
@@ -718,6 +733,7 @@ async def move_fact(
 async def bulk_move_facts(
     project_id: str,
     body: BulkMoveRequest,
+    current_user: dict = Depends(get_current_user),
     fact_repo: FactRepository = Depends(get_fact_repository),
     cluster_repo: ClusterRepository = Depends(get_cluster_repository),
 ) -> list[FactResponse]:
@@ -768,6 +784,7 @@ async def bulk_move_facts(
 )
 async def list_suggestions(
     project_id: str,
+    current_user: dict = Depends(get_current_user),
     suggestion_repo: ClusterSuggestionRepository = Depends(get_suggestion_repository),
     cluster_repo: ClusterRepository = Depends(get_cluster_repository),
 ) -> list[SuggestionResponse]:
@@ -826,6 +843,7 @@ async def list_suggestions(
 async def accept_suggestion(
     project_id: str,
     suggestion_id: str,
+    current_user: dict = Depends(get_current_user),
     suggestion_repo: ClusterSuggestionRepository = Depends(get_suggestion_repository),
 ) -> dict:
     """Akzeptiert einen Merge/Split-Vorschlag (setzt Status auf 'accepted').
@@ -850,6 +868,7 @@ async def accept_suggestion(
 async def dismiss_suggestion(
     project_id: str,
     suggestion_id: str,
+    current_user: dict = Depends(get_current_user),
     suggestion_repo: ClusterSuggestionRepository = Depends(get_suggestion_repository),
 ) -> dict:
     """Verwirft einen Merge/Split-Vorschlag (setzt Status auf 'dismissed').

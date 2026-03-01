@@ -1,5 +1,7 @@
 """Pydantic Settings -- type-safe .env configuration."""
 
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings
 
 
@@ -39,6 +41,10 @@ class Settings(BaseSettings):
     clustering_batch_size: int = 20
     clustering_pipeline_timeout_seconds: int = 600
 
+    # Auth (Slice 8)
+    jwt_secret: str = "changeme-set-JWT_SECRET-in-env"
+    jwt_algorithm: str = "HS256"
+
     # ClusteringGraph Defaults (Slice 3)
     clustering_model_default: str = "anthropic/claude-sonnet-4"
     summary_model_default: str = "anthropic/claude-haiku-4"
@@ -59,3 +65,9 @@ class Settings(BaseSettings):
         "env_file_encoding": "utf-8",
         "extra": "ignore",  # Allow extra fields in .env that are not defined in Settings
     }
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return cached Settings instance. JWT_SECRET must be set via environment variable."""
+    return Settings()

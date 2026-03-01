@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.auth_routes import router as auth_router
 from app.api.routes import router as interview_router
 from app.api.sse_routes import router as sse_router
 from app.clustering.cluster_repository import ClusterRepository
@@ -106,6 +107,7 @@ async def health_check():
     return {"status": "ok"}
 
 
+app.include_router(auth_router)
 app.include_router(interview_router)
 app.include_router(clustering_router)
 app.include_router(sse_router)

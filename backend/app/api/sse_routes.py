@@ -6,7 +6,7 @@ GET /api/projects/{project_id}/events
   - Heartbeat alle 30s damit Proxy/Load-Balancer die Verbindung offen haelt
   - Queue-Cleanup via finally-Block (verhindert Queue-Akkumulation)
 
-Slice 7: Stub-Auth (kein echtes JWT) -- Slice 8 implementiert echte JWT-Validierung.
+Slice 8: Echte JWT-Validierung via get_current_user_from_token aus app.auth.middleware.
 """
 import asyncio
 import json
@@ -17,6 +17,7 @@ from sqlalchemy import text
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.dependencies import get_sse_event_bus
+from app.auth.middleware import get_current_user_from_token
 from app.clustering.events import SseEventBus
 from app.config.settings import Settings
 from app.db.session import get_session_factory
@@ -26,36 +27,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def get_current_user_from_token(
-    token: str = Query(..., description="JWT token (EventSource cannot send headers)"),
-) -> dict:
-    """FastAPI Dependency: Validiert JWT aus Query-Parameter.
-
-    EventSource API unterstuetzt keine custom HTTP-Headers, daher wird der JWT
-    als Query-Parameter uebergeben.
-
-    Slice 7: Stub-Implementation -- akzeptiert beliebigen non-empty Token.
-    Slice 8: Wird durch echte JWT-Validierung ersetzt.
-
-    Returns:
-        dict mit User-Daten (id, email)
-    """
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing authentication token")
-
-    # Slice 7 Stub: Fixer Entwickler-User (wird in Slice 8 durch echte JWT-Validierung ersetzt)
-    return {
-        "id": "00000000-0000-0000-0000-000000000001",
-        "email": "dev@feedbackai.com",
-    }
-
-
 async def _get_project_by_id_no_user_filter(project_id: str, request: Request) -> dict | None:
-    """Laedt ein Projekt ohne User-Filter (fuer SSE Owner-Check).
-
-    Slice 7: Benoetigt wegen Stub-Auth (kein echtes JWT mit User-ID).
-    Slice 8: Wird durch get_current_user() Dependency ersetzt.
-    """
+    """Laedt ein Projekt ohne User-Filter (fuer SSE Owner-Check)."""
     settings: Settings = request.app.state.settings
     session_factory = get_session_factory(settings)
 
@@ -106,19 +79,12 @@ async def project_events(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Owner-Check (Slice 8 aktiviert echte user_id Validierung via JWT)
+    # Owner-Check: Projekt muss dem aktuellen User gehoeren
     project_user_id = str(project.get("user_id", ""))
     current_user_id = str(current_user.get("id", ""))
 
-    # Slice 7 Stub: Der Stub-User "00000000-..." besitzt alle Projekte in Development
-    # Wenn das Projekt einem ANDEREN User gehoert, wird 403 zurueckgegeben
-    # Dies wird in Slice 8 durch echte JWT-basierte User-ID ersetzt
-    if project_user_id and current_user_id:
-        # Nur wenn beide IDs bekannt und verschieden: 403
-        # Im Stub-Mode (token="dev" etc.) wird der Check grosszuegig gehandhabt
-        if (project_user_id != current_user_id and
-                project_user_id != "00000000-0000-0000-0000-000000000001"):
-            raise HTTPException(status_code=403, detail="Access denied")
+    if project_user_id and current_user_id and project_user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     logger.info(f"SSE client connected for project {project_id}")
 

@@ -5,20 +5,31 @@ import type {
   ClusterDetailResponse,
   CreateProjectRequest,
 } from '@/lib/types'
+import { getAuthToken } from '@/lib/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    ...options,
-  })
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`)
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getAuthToken()
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+
+  if (res.status === 401) {
+    // Token expired — redirect to login (Server Component context)
+    throw new Error('UNAUTHORIZED')
+  }
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error((error as { detail?: string }).detail ?? `API error ${res.status}`)
+  }
+
   return res.json() as Promise<T>
 }
 

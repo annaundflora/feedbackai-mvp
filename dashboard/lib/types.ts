@@ -136,3 +136,20 @@ export interface ReclusterStarted {
   status: string
   message: string
 }
+
+// --- Interview Assignment Types (Slice 8) ---
+
+export interface InterviewAssignment {
+  interview_id: string
+  date: string // ISO 8601
+  summary_preview: string | null
+  fact_count: number
+  extraction_status: string
+  clustering_status: string
+}
+
+export interface AvailableInterview {
+  session_id: string
+  created_at: string // ISO 8601
+  summary_preview: string | null
+}

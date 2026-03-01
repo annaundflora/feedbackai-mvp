@@ -1,14 +1,14 @@
 'use client'
 
 /**
- * Client-side API methods fuer Taxonomy-Editing (Slice 6).
+ * Client-side API helpers and methods.
  *
- * Alle Requests gehen gegen den Next.js API-Proxy (/api/proxy/...),
- * welcher die Anfragen an den Backend-Server weiterleitet.
- * Alternativ: Direkt gegen NEXT_PUBLIC_API_URL wenn kein Proxy vorhanden.
+ * clientFetch: Routes through Next.js proxy (/api/proxy/...) so the
+ *   server-side Route Handler can read the HttpOnly auth_token cookie and
+ *   forward the Authorization: Bearer header to FastAPI.
+ *   Use in ALL Client Components ("use client") for authenticated API calls.
  *
- * HINWEIS: Identisch mit api-client.ts aber fuer Client-Komponenten gedacht.
- * Nutzt apiFetch aus api-client.ts.
+ * clientApi: Taxonomy-Editing API methods (Slice 6), now using clientFetch.
  */
 
 import type {
@@ -21,25 +21,45 @@ import type {
   SuggestionResponse,
 } from '@/lib/types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+// ─── clientFetch: Proxy-based fetch for Client Components ─────────────────────
+// Client Components cannot read HttpOnly cookies directly.
+// This function routes all requests through /api/proxy/[...path] which is a
+// server-side Route Handler that reads the cookie and adds the auth header.
 
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+export async function clientFetch<T>(
+  path: string, // e.g. "/api/projects/123"
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`/api/proxy${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...(options.headers as Record<string, string>),
     },
-    ...options,
   })
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`)
+
+  if (response.status === 401) {
+    window.location.href = '/login'
+    throw new Error('UNAUTHORIZED')
   }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error((error as { detail?: string }).detail ?? `API error ${response.status}`)
+  }
+
   // 200/201 with no body (e.g. suggestions dismiss/accept) -> return {} as T
-  const contentType = res.headers.get('content-type') ?? ''
+  const contentType = response.headers.get('content-type') ?? ''
   if (!contentType.includes('application/json')) {
     return {} as T
   }
-  return res.json() as Promise<T>
+
+  return response.json() as Promise<T>
+}
+
+// ─── Internal proxy-based fetch for clientApi methods ─────────────────────────
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  return clientFetch<T>(path, options)
 }
 
 export const clientApi = {
