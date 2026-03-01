@@ -13,6 +13,8 @@ venv/
 # Node
 node_modules/
 widget/dist/
+.next/
+next-env.d.ts
 
 # Environment
 .env
@@ -37,3 +39,6 @@ Thumbs.db
 
 # LangSmith
 .langsmith/
+
+# Misc
+.seed/

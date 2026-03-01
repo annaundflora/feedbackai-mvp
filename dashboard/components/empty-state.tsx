@@ -95,6 +95,7 @@ function EmptyStateLegacy({
           <button
             type="button"
             data-testid="empty-state-cta"
+            onClick={() => document.dispatchEvent(new CustomEvent('open-new-project-dialog'))}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 text-sm font-medium transition-colors"
           >
             {ctaLabel}

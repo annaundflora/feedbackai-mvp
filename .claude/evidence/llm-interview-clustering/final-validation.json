@@ -1,0 +1,45 @@
+{
+  "feature": "llm-interview-clustering",
+  "timestamp": "2026-03-01T00:00:00Z",
+  "status": "completed",
+  "overall_status": "passed",
+  "stages": {
+    "backend_tests": {
+      "status": "passed",
+      "total": 203,
+      "passed": 203,
+      "failed": 0,
+      "breakdown": {
+        "slice-01": 45,
+        "slice-02": 69,
+        "slice-03": 41,
+        "slice-06": 48
+      }
+    },
+    "frontend_tests": {
+      "status": "passed",
+      "total": 66,
+      "passed": 66,
+      "failed": 0,
+      "breakdown": {
+        "slice-07": 25,
+        "slice-08": 41
+      }
+    },
+    "typecheck": {
+      "status": "passed",
+      "output": "tsc --noEmit exit 0"
+    }
+  },
+  "slices_completed": [
+    {"id": "slice-01", "retries": 0, "commit": "b04b95e"},
+    {"id": "slice-02", "retries": 0, "commit": "00432d1"},
+    {"id": "slice-03", "retries": 1, "commit": "84976f6"},
+    {"id": "slice-04", "retries": 1, "commit": "cbe9fe3"},
+    {"id": "slice-05", "retries": 0, "commit": "d23ba8d"},
+    {"id": "slice-06", "retries": 0, "commit": "f89dccb"},
+    {"id": "slice-07", "retries": 2, "commit": "056f4f5"},
+    {"id": "slice-08", "retries": 2, "commit": "f15702b"}
+  ],
+  "branch": "main"
+}

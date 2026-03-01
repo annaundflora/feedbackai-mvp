@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { StatusBar } from '@/components/status-bar'
-import { ProjectTabs } from '@/components/project-tabs'
 import { EmptyState } from '@/components/empty-state'
 import { ClusterContextMenu } from '@/components/cluster-context-menu'
 import { InlineRename } from '@/components/inline-rename'
@@ -227,20 +226,6 @@ export function ProjectInsightsClient({
 
   return (
     <>
-      <header className="mb-6">
-        <h2
-          data-testid="project-title"
-          className="text-2xl font-bold text-gray-900"
-        >
-          {project.name}
-        </h2>
-        <p data-testid="project-research-goal" className="text-gray-600 mt-1">
-          {project.research_goal}
-        </p>
-      </header>
-
-      <ProjectTabs projectId={projectId} activeTab="insights" />
-
       <StatusBar
         interviewCount={project.interview_count}
         factCount={factCount}
@@ -309,30 +294,58 @@ export function ProjectInsightsClient({
                   </div>
                 </article>
               ) : (
-                <article className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 relative">
-                  {/* live_update_badge -- pulsierender Dot fuer 3s */}
-                  {(anyLiveUpdate || liveUpdateClusterIds.has(cluster.id)) && (
-                    <span
-                      aria-label="New fact added"
-                      aria-live="polite"
-                      data-testid="live-update-badge"
-                      className="absolute top-3 right-10 w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"
-                    />
-                  )}
-                  <div className="flex items-start justify-between">
-                    <Link
-                      href={`/projects/${projectId}/clusters/${cluster.id}`}
-                      className="flex-1 focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                      aria-label={`View cluster: ${cluster.name}`}
-                      data-testid="cluster-card"
+                <article className="relative group">
+                  <Link
+                    href={`/projects/${projectId}/clusters/${cluster.id}`}
+                    className="block bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:border-gray-300 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    aria-label={`View cluster: ${cluster.name}`}
+                    data-testid="cluster-card"
+                  >
+                    {/* live_update_badge -- pulsierender Dot fuer 3s */}
+                    {(anyLiveUpdate || liveUpdateClusterIds.has(cluster.id)) && (
+                      <span
+                        aria-label="New fact added"
+                        aria-live="polite"
+                        data-testid="live-update-badge"
+                        className="absolute top-3 right-10 w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"
+                      />
+                    )}
+
+                    <h3
+                      data-testid="cluster-name"
+                      className="text-base font-semibold text-gray-900 mb-2"
                     >
-                      <h3
-                        data-testid="cluster-name"
-                        className="text-base font-semibold text-gray-900"
+                      {cluster.name}
+                    </h3>
+
+                    <div className="flex gap-4 mb-3">
+                      <span
+                        data-testid="cluster-fact-count"
+                        className="text-xs font-medium text-gray-500"
                       >
-                        {cluster.name}
-                      </h3>
-                    </Link>
+                        {cluster.fact_count} Facts
+                      </span>
+                      <span
+                        data-testid="cluster-interview-count"
+                        className="text-xs font-medium text-gray-500"
+                      >
+                        {cluster.interview_count} Interviews
+                      </span>
+                    </div>
+
+                    {cluster.summary !== null ? (
+                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                        {cluster.summary}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">
+                        Generating summary...
+                      </p>
+                    )}
+                  </Link>
+
+                  {/* Context Menu außerhalb des Links, absolut positioniert */}
+                  <div className="absolute top-3 right-3 z-10">
                     <ClusterContextMenu
                       cluster={cluster}
                       projectId={projectId}
@@ -345,31 +358,6 @@ export function ProjectInsightsClient({
                       }
                     />
                   </div>
-
-                  <div className="flex gap-4 mt-2">
-                    <span
-                      data-testid="cluster-fact-count"
-                      className="text-sm text-gray-600"
-                    >
-                      {cluster.fact_count} Facts
-                    </span>
-                    <span
-                      data-testid="cluster-interview-count"
-                      className="text-sm text-gray-600"
-                    >
-                      {cluster.interview_count} Interviews
-                    </span>
-                  </div>
-
-                  {cluster.summary !== null ? (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-3">
-                      {cluster.summary}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-2 italic">
-                      Generating summary...
-                    </p>
-                  )}
                 </article>
               )}
             </div>

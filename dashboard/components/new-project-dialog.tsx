@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { apiClient } from '@/lib/api-client'
+import { browserApiClient } from '@/lib/api-client-browser'
 
 export function NewProjectDialog() {
   const router = useRouter()
@@ -25,6 +25,13 @@ export function NewProjectDialog() {
     setExtractionSource('summary')
   }, [])
 
+  // Open via CustomEvent from EmptyState CTA
+  useEffect(() => {
+    const handler = () => setOpen(true)
+    document.addEventListener('open-new-project-dialog', handler)
+    return () => document.removeEventListener('open-new-project-dialog', handler)
+  }, [])
+
   // Close on Escape key
   useEffect(() => {
     if (!open) return
@@ -41,7 +48,7 @@ export function NewProjectDialog() {
     setSaving(true)
     setError(null)
     try {
-      await apiClient.createProject({
+      await browserApiClient.createProject({
         name: name.trim(),
         research_goal: researchGoal.trim(),
         prompt_context: promptContext.trim() || undefined,

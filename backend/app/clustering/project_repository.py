@@ -44,6 +44,26 @@ class ProjectRepository:
             row = result.mappings().first()
             return dict(row) if row else {}
 
+    async def get_by_id_internal(self, project_id: str) -> dict | None:
+        """SELECT * FROM projects WHERE id = :id (kein User-Filter).
+
+        Interne Nutzung fuer Background-Tasks (Extraction, Clustering),
+        die keine User-Session haben.
+
+        Args:
+            project_id: UUID des Projekts
+
+        Returns:
+            dict mit Projektdaten oder None wenn nicht gefunden
+        """
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text("SELECT * FROM projects WHERE id = :project_id"),
+                {"project_id": project_id},
+            )
+            row = result.mappings().first()
+            return dict(row) if row else None
+
     async def get_by_id(self, project_id: str, user_id: str) -> dict | None:
         """SELECT * FROM projects WHERE id = :id AND user_id = :user_id
 

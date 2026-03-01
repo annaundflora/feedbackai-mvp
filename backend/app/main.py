@@ -1,10 +1,19 @@
 """FeedbackAI Backend -- FastAPI Application."""
 
+import logging
+import logging.config
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Debug-Logging fuer Clustering-Module (sichtbar in Uvicorn stdout)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logging.getLogger("app.clustering").setLevel(logging.DEBUG)
 
 from app.api.auth_routes import router as auth_router
 from app.api.routes import router as interview_router

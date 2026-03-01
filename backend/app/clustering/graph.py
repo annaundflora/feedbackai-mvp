@@ -145,14 +145,22 @@ class ClusteringGraph:
         """Formatiert Cluster als lesbaren Text fuer Prompts."""
         lines = []
         for cluster in clusters:
-            cluster_id = cluster.get("id", "new")
+            cluster_id = cluster.get("id")
             name = cluster.get("name", "")
             summary = cluster.get("summary", "")
             fact_count = cluster.get("fact_count", 0)
-            if summary:
-                lines.append(f"- [{cluster_id}] {name}: {summary} ({fact_count} facts)")
+            if cluster_id:
+                # Bestehender Cluster mit echter UUID
+                if summary:
+                    lines.append(f"- [id:{cluster_id}] {name}: {summary} ({fact_count} facts)")
+                else:
+                    lines.append(f"- [id:{cluster_id}] {name} ({fact_count} facts)")
             else:
-                lines.append(f"- [{cluster_id}] {name} ({fact_count} facts)")
+                # Neuer Cluster (noch keine UUID) — LLM soll new_cluster_name verwenden
+                if summary:
+                    lines.append(f"- [NEW] {name}: {summary} ({fact_count} facts)")
+                else:
+                    lines.append(f"- [NEW] {name} ({fact_count} facts)")
         return "\n".join(lines)
 
     def _parse_json_response(self, content: str, expected_type: type) -> list | dict:
@@ -225,6 +233,10 @@ class ClusteringGraph:
         all_cluster_names: list[str] = []
         batches = [facts[i:i + batch_size] for i in range(0, len(facts), batch_size)]
         total_batches = len(batches)
+        logger.debug(
+            f"[generate_taxonomy] project={state['project_id']} | "
+            f"facts={len(facts)} | batch_size={batch_size} | total_batches={total_batches}"
+        )
 
         for batch_idx, batch in enumerate(batches, 1):
             facts_text = self._format_facts_text(batch)
@@ -297,7 +309,12 @@ class ClusteringGraph:
         try:
             response = await llm.ainvoke(prompt)
             content = response.content
+            logger.debug(
+                f"[assign_facts] LLM raw response (first 1000 chars): "
+                f"{str(content)[:1000]}"
+            )
             raw_assignments = self._parse_json_response(content, list)
+            logger.debug(f"[assign_facts] parsed {len(raw_assignments)} raw assignments from LLM")
 
             for assignment in raw_assignments:
                 if not isinstance(assignment, dict):
@@ -336,7 +353,16 @@ class ClusteringGraph:
             ]
             new_clusters.append({"name": cluster_name, "fact_ids": fact_ids})
 
-        logger.info(f"[assign_facts] Generated {len(assignments)} assignments, {len(new_clusters)} new clusters")
+        # Assignments aufschlüsseln für Debug
+        n_to_existing = sum(1 for a in assignments if a.get("cluster_id") and not a.get("new_cluster_name"))
+        n_to_new = sum(1 for a in assignments if a.get("new_cluster_name"))
+        n_unassigned = sum(1 for a in assignments if not a.get("cluster_id") and not a.get("new_cluster_name"))
+        logger.info(
+            f"[assign_facts] Generated {len(assignments)} assignments | "
+            f"to_existing_cluster={n_to_existing} | to_new_cluster={n_to_new} | unassigned={n_unassigned} | "
+            f"new_cluster_names={new_cluster_names}"
+        )
+        logger.debug(f"[assign_facts] {len(new_clusters)} new clusters: {[nc['name'] for nc in new_clusters]}")
         return {
             "assignments": assignments,
             "new_clusters": new_clusters,

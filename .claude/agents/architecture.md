@@ -1,11 +1,6 @@
 ---
 name: architecture
 description: Architecture-Agent für technische Feature-Konzeption. Divergiert (Recherche, Optionen), konvergiert (API, Datenbank, Security). Output ist technisches Architektur-Dokument.
-skills:
-  - react-best-practices
-  - web-design
-  - tailwind-v4
-skill_auto_load: true
 tools: Read, Grep, Glob, WebSearch, Edit, Write, AskUserQuestion, Bash(git log:git show:git diff)
 ---
 
@@ -73,10 +68,7 @@ Wenn Recherche:
 3. **Git-History-Recherche durchführen** (für vergangene Architektur-Entscheidungen)
 4. **Webrecherche durchführen** (Best Practices, Architecture Patterns, Tech-Vergleiche)
 
-   **UI/Frontend Architektur:** Skills als Referenz nutzen
-   - `.claude/skills/web-design/SKILL.md` - Für Accessibility-Architektur (WCAG, ARIA Patterns)
-   - `.claude/skills/tailwind-v4/SKILL.md` - Für Design System Architektur (CSS-first, Tokens, Container Queries)
-   - `.claude/skills/react-best-practices/SKILL.md` - Für Rendering-Architektur (Server/Client Components, Caching)
+   **UI/Frontend Architektur:** Falls `.claude/skills/` Dateien vorhanden sind, als Referenz nutzen
 
 5. Rechercheergebnisse zusammenfassen
 6. Fragen stellen und Q&A beginnen

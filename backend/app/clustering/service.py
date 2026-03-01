@@ -66,6 +66,16 @@ class ClusteringService:
         # Laufende Full-Recluster-Tasks pro Projekt (verhindert parallele Laeufe: 409)
         # Instance-level set (NICHT class-level)
         self._running_recluster: set[str] = set()
+        # Per-project Lock: serialisiert process_interview Aufrufe damit
+        # nicht alle gleichzeitig existing_clusters_count=0 sehen und
+        # jeweils eigene Cluster erstellen (Race Condition Fix)
+        self._project_locks: dict[str, asyncio.Lock] = {}
+
+    def _get_project_lock(self, project_id: str) -> asyncio.Lock:
+        """Gibt den per-project Lock zurueck (erstellt ihn lazy)."""
+        if project_id not in self._project_locks:
+            self._project_locks[project_id] = asyncio.Lock()
+        return self._project_locks[project_id]
 
     async def process_interview(
         self,
@@ -77,6 +87,10 @@ class ClusteringService:
         Wird von FactExtractionService nach erfolgreicher Extraktion aufgerufen.
         Laeuft als asyncio.create_task() (non-blocking).
 
+        Verwendet per-project Lock um Race Conditions zu vermeiden:
+        Ohne Lock sehen alle gleichzeitigen Tasks existing_clusters_count=0
+        und erstellen jeweils eigene Cluster-Sets (N Interviews -> N*K Cluster).
+
         Logik:
         - Bestehende Cluster laden
         - Falls keine Cluster vorhanden -> mode="full" (Erstes Interview des Projekts)
@@ -86,11 +100,26 @@ class ClusteringService:
         - clustering_status aktualisieren
         - SSE-Events publizieren
         """
-        logger.info(f"Clustering started for interview {interview_id} in project {project_id}")
+        import time as _time
+        _start_ts = _time.monotonic()
+        logger.info(f"[process_interview] START interview={interview_id} project={project_id}")
+
+        lock = self._get_project_lock(project_id)
+        async with lock:
+            await self._process_interview_locked(project_id, interview_id, _start_ts)
+
+    async def _process_interview_locked(
+        self,
+        project_id: str,
+        interview_id: str,
+        _start_ts: float,
+    ) -> None:
+        """Interne Implementierung von process_interview (unter Lock)."""
+        import time as _time
 
         try:
             # Projekt-Konfiguration laden
-            project = await self._project_repo.get_by_id(project_id)
+            project = await self._project_repo.get_by_id_internal(project_id)
             if not project:
                 logger.error(f"Project {project_id} not found for clustering")
                 return
@@ -112,9 +141,18 @@ class ClusteringService:
 
             # Bestehende Cluster laden
             existing_clusters = await self._cluster_repo.list_for_project(project_id)
+            logger.debug(
+                f"[process_interview] interview={interview_id} | "
+                f"existing_clusters_count={len(existing_clusters)} | "
+                f"cluster_ids={[str(c.get('id','?')) for c in existing_clusters[:5]]}"
+            )
 
             # Facts des Interviews laden
             new_facts = await self._fact_repo.get_facts_for_interview(project_id, interview_id)
+            logger.debug(
+                f"[process_interview] interview={interview_id} | "
+                f"new_facts_count={len(new_facts)}"
+            )
 
             if not new_facts:
                 logger.warning(f"No facts found for interview {interview_id}, skipping clustering")
@@ -131,12 +169,19 @@ class ClusteringService:
                 facts = await self._fact_repo.get_facts_for_project(project_id)
                 # Konvertiere Row-Dicts zu str-Keys
                 facts = [self._normalize_fact(f) for f in facts]
-                logger.info(f"No existing clusters, using mode='full' with {len(facts)} facts")
+                logger.info(
+                    f"[process_interview] interview={interview_id} | mode=full | "
+                    f"total_project_facts={len(facts)} | "
+                    f"(serialized via per-project lock)"
+                )
             else:
                 mode = "incremental"
                 facts = [self._normalize_fact(f) for f in new_facts]
                 existing_clusters = [self._normalize_cluster(c) for c in existing_clusters]
-                logger.info(f"Existing clusters found, using mode='incremental' with {len(facts)} new facts")
+                logger.info(
+                    f"[process_interview] interview={interview_id} | mode=incremental | "
+                    f"new_facts={len(facts)} | existing_clusters={len(existing_clusters)}"
+                )
 
             # SSE: clustering_started
             await self._event_bus.publish(
@@ -254,9 +299,10 @@ class ClusteringService:
                 },
             )
 
+            _elapsed = _time.monotonic() - _start_ts
             logger.info(
-                f"Clustering completed for interview {interview_id}: "
-                f"{cluster_count} clusters, {fact_count} facts"
+                f"[process_interview] DONE interview={interview_id} | "
+                f"elapsed={_elapsed:.1f}s | {cluster_count} clusters | {fact_count} total facts"
             )
 
         except Exception as e:
@@ -315,7 +361,7 @@ class ClusteringService:
 
         try:
             # Projekt-Konfiguration laden
-            project = await self._project_repo.get_by_id(project_id)
+            project = await self._project_repo.get_by_id_internal(project_id)
             if not project:
                 logger.error(f"Project {project_id} not found for full re-cluster")
                 return
@@ -366,6 +412,17 @@ class ClusteringService:
                         )
                 return
 
+            # SSE: clustering_progress (assigning step) -- zeigt ProgressIndicator im Frontend
+            await self._event_bus.publish(
+                project_id=project_id,
+                event_type="clustering_progress",
+                data={
+                    "step": "assigning",
+                    "completed": 0,
+                    "total": len(facts),
+                },
+            )
+
             # [3] ClusteringGraph mit mode="full" ausfuehren
             initial_state: ClusteringState = {
                 "project_id": project_id,
@@ -385,6 +442,18 @@ class ClusteringService:
             }
 
             graph_output = await self._graph.invoke(initial_state)
+
+            # SSE: clustering_progress (summarizing step)
+            new_clusters_count = len(graph_output.get("new_clusters", []))
+            await self._event_bus.publish(
+                project_id=project_id,
+                event_type="clustering_progress",
+                data={
+                    "step": "summarizing",
+                    "completed": 0,
+                    "total": new_clusters_count,
+                },
+            )
 
             # [4] Ergebnisse persistieren
             await self._persist_results(
@@ -483,6 +552,23 @@ class ClusteringService:
         summaries = graph_output.get("summaries", {})
         suggestions = graph_output.get("suggestions", [])
 
+        logger.debug(
+            f"[_persist_results] project={project_id} interview={interview_id} | "
+            f"raw_assignments={len(assignments)} | new_clusters_raw={len(new_clusters_raw)} | "
+            f"new_cluster_names={[nc.get('name','?') for nc in new_clusters_raw]}"
+        )
+
+        # Assignments aufschlüsseln: wie viele gehen zu existing vs. new clusters
+        assignments_to_existing = [a for a in assignments if a.get("cluster_id") and not a.get("new_cluster_name")]
+        assignments_to_new = [a for a in assignments if a.get("new_cluster_name")]
+        assignments_without_cluster = [a for a in assignments if not a.get("cluster_id") and not a.get("new_cluster_name")]
+        logger.debug(
+            f"[_persist_results] assignments breakdown: "
+            f"to_existing={len(assignments_to_existing)} | "
+            f"to_new_cluster={len(assignments_to_new)} | "
+            f"without_cluster={len(assignments_without_cluster)}"
+        )
+
         # 1. Neue Cluster anlegen und UUID-Mapping aufbauen
         # name -> UUID Mapping fuer neue Cluster
         name_to_cluster_id: dict[str, str] = {}
@@ -499,6 +585,7 @@ class ClusteringService:
                     name_to_cluster_id[name] = cluster_id
 
         # 2. Assignments aufloesen: new_cluster_name -> cluster_id
+        import uuid as _uuid
         resolved_assignments = []
         for assignment in assignments:
             fact_id = assignment.get("fact_id")
@@ -508,14 +595,46 @@ class ClusteringService:
             if not fact_id:
                 continue
 
+            # LLM halluziniert manchmal Integer-IDs ("253", "369") statt UUIDs
+            # Solche ungueltige fact_ids wuerden einen PostgreSQL-Fehler verursachen
+            try:
+                _uuid.UUID(str(fact_id))
+            except (ValueError, AttributeError):
+                logger.warning(f"Skipping assignment with non-UUID fact_id: {fact_id!r}")
+                continue
+
             # new_cluster_name -> echte cluster_id aufloesen
             if cluster_id is None and new_cluster_name:
                 cluster_id = name_to_cluster_id.get(new_cluster_name)
+            elif cluster_id is not None:
+                # Pruefen ob cluster_id eine valide UUID ist
+                try:
+                    _uuid.UUID(str(cluster_id))
+                except ValueError:
+                    # LLM hat Cluster-Namen statt UUID zurueckgegeben -> als Name aufloesen
+                    resolved = name_to_cluster_id.get(str(cluster_id))
+                    if resolved is None and new_cluster_name:
+                        resolved = name_to_cluster_id.get(new_cluster_name)
+                    if resolved is None:
+                        logger.warning(f"Cannot resolve cluster_id '{cluster_id}' to UUID, skipping assignment for fact {fact_id}")
+                    cluster_id = resolved
 
             resolved_assignments.append({
                 "fact_id": str(fact_id),
                 "cluster_id": str(cluster_id) if cluster_id else None,
             })
+
+        skipped = len(assignments) - len(resolved_assignments)
+        logger.debug(
+            f"[_persist_results] resolved_assignments={len(resolved_assignments)} | "
+            f"skipped={skipped} | "
+            f"name_to_cluster_id={name_to_cluster_id}"
+        )
+        if resolved_assignments:
+            logger.debug(
+                f"[_persist_results] sample resolved_assignments (first 5): "
+                f"{resolved_assignments[:5]}"
+            )
 
         # Fact-Zuordnungen in DB aktualisieren
         if resolved_assignments:

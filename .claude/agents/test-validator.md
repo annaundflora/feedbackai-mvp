@@ -43,8 +43,13 @@ Erkenne den Stack anhand von Indicator-Dateien:
 |----------------|-------|---------------|-------------|---------------|-----------------|
 | pyproject.toml + fastapi | Python/FastAPI | pytest | python -m pytest {path} -v | uvicorn app.main:app --host 0.0.0.0 --port 8000 | http://localhost:8000/health |
 | requirements.txt + fastapi | Python/FastAPI | pytest | python -m pytest {path} -v | uvicorn app.main:app --host 0.0.0.0 --port 8000 | http://localhost:8000/health |
+| pyproject.toml + django | Python/Django | pytest | python -m pytest {path} -v | python manage.py runserver | http://localhost:8000/health |
 | package.json + next | TypeScript/Next.js | vitest + playwright | pnpm test {path} | pnpm dev | http://localhost:3000/api/health |
+| package.json + nuxt | TypeScript/Nuxt | vitest | pnpm test {path} | pnpm dev | http://localhost:3000/api/health |
+| package.json + vue ^3 (ohne nuxt) | TypeScript/Vue 3 | vitest | pnpm test {path} | pnpm dev | http://localhost:5173 |
+| package.json + vue ^2 | JavaScript/Vue 2 | jest | pnpm test {path} | pnpm serve | http://localhost:8080 |
 | package.json + express | TypeScript/Express | vitest | pnpm test {path} | node server.js | http://localhost:3000/health |
+| composer.json + laravel | PHP/Laravel | pest/phpunit | php artisan test {path} | php artisan serve | http://localhost:8000/health |
 | go.mod | Go | go test | go test {path} | go run . | http://localhost:8080/health |
 
 ### Phase 2: Test Execution (Sequenziell)
@@ -89,10 +94,10 @@ Fuehre Stages in dieser Reihenfolge aus. Bei Failure: ABBRUCH, alle nachfolgende
 ### Phase 3: Final Validation (nur bei mode: final_validation)
 
 Zusaetzliche Steps VOR den Test-Stages:
-1. Auto-Fix Lint: `ruff check --fix .` (Python) / `pnpm eslint --fix .` (TypeScript)
-2. Lint Check: `ruff check .` (Python) / `pnpm lint` (TypeScript)
-3. Type Check: `mypy .` (Python, falls konfiguriert) / `pnpm tsc --noEmit` (TypeScript)
-4. Build: `pip install -e .` (Python, falls setup.py) / `pnpm build` (TypeScript)
+1. Auto-Fix Lint: `ruff check --fix .` (Python) / `pnpm eslint --fix .` (TypeScript) / `./vendor/bin/pint` (PHP)
+2. Lint Check: `ruff check .` (Python) / `pnpm lint` (TypeScript) / `./vendor/bin/pint --test` (PHP)
+3. Type Check: `mypy .` (Python) / `pnpm tsc --noEmit` (TypeScript) / `phpstan analyse` (PHP, falls konfiguriert)
+4. Build: `pip install -e .` (Python) / `pnpm build` (TypeScript) / skip (PHP, kein Build-Step)
 
 ### Phase 4: JSON Output
 

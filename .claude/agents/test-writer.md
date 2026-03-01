@@ -40,8 +40,13 @@ Erkenne den Stack anhand von Indicator-Dateien im Repo-Root:
 |----------------|-------|---------------|---------------------|
 | `pyproject.toml` + fastapi dep | Python/FastAPI | pytest | `python -m pytest {path} -v` |
 | `requirements.txt` + fastapi | Python/FastAPI | pytest | `python -m pytest {path} -v` |
+| `pyproject.toml` + django dep | Python/Django | pytest | `python -m pytest {path} -v` |
 | `package.json` + next dep | TypeScript/Next.js | vitest | `pnpm test {path}` |
+| `package.json` + nuxt dep | TypeScript/Nuxt | vitest | `pnpm test {path}` |
+| `package.json` + vue ^3 (ohne nuxt) | TypeScript/Vue 3 | vitest | `pnpm test {path}` |
+| `package.json` + vue ^2 | JavaScript/Vue 2 | jest | `pnpm test {path}` |
 | `package.json` + express dep | TypeScript/Express | vitest | `pnpm test {path}` |
+| `composer.json` + laravel | PHP/Laravel | pest/phpunit | `php artisan test {path}` |
 | `go.mod` | Go | go test | `go test {path}` |
 
 Falls kein Stack erkannt wird: Fehler melden und `status: failed` returnen.

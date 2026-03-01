@@ -1,0 +1,38 @@
+{
+  "spec_path": "specs/phase-4/2026-02-28-llm-interview-clustering",
+  "feature_name": "llm-interview-clustering",
+  "status": "completed",
+  "current_state": "feature_complete",
+  "current_slice_id": null,
+  "retry_count": 0,
+  "failed_stage": null,
+  "waves": [
+    {"wave": 1, "slices": ["slice-01"]},
+    {"wave": 2, "slices": ["slice-02"]},
+    {"wave": 3, "slices": ["slice-03"]},
+    {"wave": 4, "slices": ["slice-04"]},
+    {"wave": 5, "slices": ["slice-05"]},
+    {"wave": 6, "slices": ["slice-06"]},
+    {"wave": 7, "slices": ["slice-07"]},
+    {"wave": 8, "slices": ["slice-08"]}
+  ],
+  "completed_slices": ["slice-01", "slice-02", "slice-03", "slice-04", "slice-05", "slice-06", "slice-07", "slice-08"],
+  "evidence_files": [
+    ".claude/evidence/llm-interview-clustering/slice-01.json",
+    ".claude/evidence/llm-interview-clustering/slice-02.json",
+    ".claude/evidence/llm-interview-clustering/slice-03.json",
+    ".claude/evidence/llm-interview-clustering/slice-04.json",
+    ".claude/evidence/llm-interview-clustering/slice-05.json",
+    ".claude/evidence/llm-interview-clustering/slice-06.json",
+    ".claude/evidence/llm-interview-clustering/slice-07.json",
+    ".claude/evidence/llm-interview-clustering/slice-08.json",
+    ".claude/evidence/llm-interview-clustering/final-validation.json"
+  ],
+  "started_at": "2026-02-28T00:00:00Z",
+  "completed_at": "2026-03-01T00:00:00Z",
+  "final_validation": {
+    "backend_tests": {"total": 203, "passed": 203, "failed": 0},
+    "frontend_tests": {"total": 66, "passed": 66, "failed": 0},
+    "typecheck": "passed"
+  }
+}

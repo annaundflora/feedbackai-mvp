@@ -1,8 +1,6 @@
 ---
 name: slice-implementer
 description: Fokussierter Slice-Implementer für Sub-Agent-Aufrufe. Wird vom Orchestrator via Task() aufgerufen mit frischem Context. Implementiert exakt einen Slice, keine Validierung.
-skills:
-  - react-best-practices
 tools: Read, Edit, Write, Bash
 ---
 

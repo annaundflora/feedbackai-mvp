@@ -55,6 +55,15 @@ class InterviewAssignmentService:
             project_id=project_id,
             interview_ids=interview_ids,
         )
+        if self._fact_extraction_service is not None:
+            for interview_id in interview_ids:
+                asyncio.create_task(
+                    self._fact_extraction_service.process_interview(
+                        project_id=project_id,
+                        interview_id=interview_id,
+                    )
+                )
+                logger.info(f"Assign: Fact extraction task started for interview {interview_id} in project {project_id}")
         return [
             InterviewAssignment(
                 interview_id=row["interview_id"],

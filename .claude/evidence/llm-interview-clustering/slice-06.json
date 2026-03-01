@@ -1,0 +1,52 @@
+{
+  "feature": "llm-interview-clustering",
+  "slice": "slice-06",
+  "timestamp": "2026-02-28T00:06:00Z",
+  "status": "completed",
+  "implementation": {
+    "status": "completed",
+    "files_changed": [
+      "backend/app/clustering/exceptions.py",
+      "backend/app/clustering/taxonomy_service.py",
+      "backend/app/clustering/router.py",
+      "backend/app/clustering/schemas.py",
+      "backend/app/clustering/cluster_repository.py",
+      "backend/app/clustering/fact_repository.py",
+      "dashboard/app/projects/[id]/page.tsx",
+      "dashboard/app/projects/[id]/insights-client.tsx",
+      "dashboard/app/projects/[id]/clusters/[cluster_id]/page.tsx",
+      "dashboard/app/projects/[id]/clusters/[cluster_id]/cluster-detail-client.tsx",
+      "dashboard/components/cluster-context-menu.tsx",
+      "dashboard/components/inline-rename.tsx",
+      "dashboard/components/merge-dialog.tsx",
+      "dashboard/components/undo-toast.tsx",
+      "dashboard/components/split-modal.tsx",
+      "dashboard/components/suggestion-banner.tsx",
+      "dashboard/components/recalculate-modal.tsx",
+      "dashboard/components/bulk-move-bar.tsx",
+      "dashboard/components/fact-context-menu.tsx",
+      "dashboard/lib/types.ts",
+      "dashboard/lib/client-api.ts",
+      "tests/slices/llm-interview-clustering/slice-06-taxonomy-editing-summary-regen.spec.ts"
+    ],
+    "commit_hash": "f89dccb",
+    "notes": "BackgroundTasks for recluster, Server+Client Component pattern for interactive pages, in-memory undo dict"
+  },
+  "tests": {
+    "status": "completed",
+    "test_files": ["backend/tests/slices/llm-interview-clustering/test_slice_06_taxonomy_service.py"],
+    "test_count": 56,
+    "ac_coverage": {"total": 11, "covered": 11, "missing": []}
+  },
+  "validation": {
+    "overall_status": "passed",
+    "stages": {
+      "tests": {"status": "passed", "output": "56 passed in 2.21s"},
+      "typecheck": {"status": "passed", "output": "tsc --noEmit exit 0"},
+      "e2e": {"status": "skipped"}
+    },
+    "failed_stage": null,
+    "error_output": null
+  },
+  "retries": 0
+}

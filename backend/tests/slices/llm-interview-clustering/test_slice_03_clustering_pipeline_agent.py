@@ -798,6 +798,79 @@ class TestAC6PersistResults:
             assert a["cluster_id"] == new_cluster_uuid
 
     @pytest.mark.asyncio
+    async def test_persist_results_skips_hallucinated_integer_fact_ids(
+        self,
+        mock_project_id,
+        mock_facts_new,
+        mock_cluster_repository,
+        mock_fact_repository,
+        mock_assignment_repository,
+        mock_project_repository,
+        mock_event_bus,
+        mock_suggestion_repository,
+        mock_settings,
+    ):
+        """Bug-Fix: LLM halluziniert manchmal Integer-IDs ('253', '369') statt UUIDs.
+
+        GIVEN ein graph_output mit 3 assignments:
+          - 2 valide UUID fact_ids (korrekte UUIDs aus der DB)
+          - 1 halluzinierte Integer-ID ('253')
+        WHEN _persist_results() aufgerufen wird
+        THEN werden nur die 2 validen Assignments an update_cluster_assignments uebergeben
+             und kein PostgreSQL UUID-Fehler geworfen.
+        """
+        new_cluster_uuid = str(uuid.uuid4())
+        mock_cluster_repository.create_clusters = AsyncMock(
+            return_value=[{"id": new_cluster_uuid, "name": "Pain Points & Barriers"}]
+        )
+
+        valid_fact_id_1 = mock_facts_new[0]["id"]  # echter UUID
+        valid_fact_id_2 = mock_facts_new[1]["id"]  # echter UUID
+        hallucinated_fact_id = "253"               # LLM-Halluzination: Integer statt UUID
+
+        graph_output = {
+            "assignments": [
+                {"fact_id": valid_fact_id_1,       "cluster_id": None, "new_cluster_name": "Pain Points & Barriers"},
+                {"fact_id": valid_fact_id_2,       "cluster_id": None, "new_cluster_name": "Pain Points & Barriers"},
+                {"fact_id": hallucinated_fact_id,  "cluster_id": None, "new_cluster_name": "Pain Points & Barriers"},
+            ],
+            "new_clusters": [{"name": "Pain Points & Barriers", "fact_ids": [valid_fact_id_1, valid_fact_id_2]}],
+            "summaries": {},
+            "suggestions": [],
+        }
+
+        mock_graph = AsyncMock()
+        service = _build_clustering_service(
+            mock_graph,
+            mock_cluster_repository,
+            mock_suggestion_repository,
+            mock_fact_repository,
+            mock_assignment_repository,
+            mock_project_repository,
+            mock_event_bus,
+            mock_settings,
+        )
+
+        # Kein Exception trotz halluzinierter fact_id
+        await service._persist_results(mock_project_id, graph_output)
+
+        # update_cluster_assignments wurde aufgerufen
+        mock_fact_repository.update_cluster_assignments.assert_called_once()
+        assignments_arg = mock_fact_repository.update_cluster_assignments.call_args[0][0]
+
+        # Nur 2 valide Assignments uebergeben (halluzinierte "253" gefiltert)
+        assert len(assignments_arg) == 2
+
+        passed_fact_ids = [a["fact_id"] for a in assignments_arg]
+        assert valid_fact_id_1 in passed_fact_ids
+        assert valid_fact_id_2 in passed_fact_ids
+        assert hallucinated_fact_id not in passed_fact_ids
+
+        # Alle uebergebenen Assignments haben aufgeloeste cluster_ids (kein None)
+        for a in assignments_arg:
+            assert a["cluster_id"] == new_cluster_uuid
+
+    @pytest.mark.asyncio
     async def test_persist_results_saves_summaries(
         self,
         mock_project_id,

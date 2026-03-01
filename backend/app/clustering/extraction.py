@@ -98,7 +98,7 @@ class FactExtractionService:
 
         try:
             # 1. Projekt-Konfiguration laden
-            project = await self._project_repository.get_by_id(project_id)
+            project = await self._project_repository.get_by_id_internal(project_id)
             if not project:
                 logger.error(f"Project {project_id} not found for fact extraction")
                 return

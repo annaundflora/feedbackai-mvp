@@ -108,5 +108,9 @@ async def run_migration(session_factory) -> None:
     from sqlalchemy import text
 
     async with session_factory() as session:
-        await session.execute(text(CREATE_TABLES_SQL))
+        # asyncpg requires executing statements one at a time
+        for statement in CREATE_TABLES_SQL.split(";"):
+            cleaned = statement.strip()
+            if cleaned and not cleaned.startswith("--"):
+                await session.execute(text(cleaned))
         await session.commit()

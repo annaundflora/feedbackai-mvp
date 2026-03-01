@@ -72,10 +72,18 @@ Research Goal: {research_goal}
 Available Clusters:
 {clusters_text}
 
+Cluster format:
+- [id:UUID] ClusterName → existing cluster with a real UUID, use this UUID as cluster_id
+- [NEW] ClusterName → proposed cluster without UUID yet, use new_cluster_name with the exact cluster name
+
 Facts to assign:
 {facts_text}
 
-For each fact, assign it to exactly one cluster. If no existing cluster fits well (similarity < 60%), propose a new cluster name.
+Rules:
+- For [id:UUID] clusters: set cluster_id to the UUID, set new_cluster_name to null
+- For [NEW] clusters: set cluster_id to null, set new_cluster_name to the exact cluster name shown
+- If no cluster fits (similarity < 60%): set cluster_id to null, set new_cluster_name to a new name
+- NEVER put a cluster name in cluster_id — cluster_id must be a UUID or null
 
 Return ONLY a valid JSON array. No preamble.
 

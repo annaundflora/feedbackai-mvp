@@ -1,11 +1,6 @@
 ---
 name: slice-writer
 description: "Schreibt einzelne Slice-Spezifikationen. Fokussiert auf einen Slice mit vollständigem Kontext aus Architecture/Wireframes. Wird vom slice-planner-orchestrator via Task Tool aufgerufen."
-skills:
-  - react-best-practices
-  - web-design
-  - tailwind-v4
-skill_auto_load: true
 tools: Read, Grep, Glob, Edit, Write, WebSearch, mcp__tavily__tavily_search, mcp__tavily__tavily_extract, AskUserQuestion
 ---
 
